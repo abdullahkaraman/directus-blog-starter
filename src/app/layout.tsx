@@ -39,6 +39,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 						headerNavigation={headerNavigation}
 						footerNavigation={footerNavigation}
 						globals={globals}
+						publicWriteEnabled={process.env.ENABLE_PUBLIC_WRITE === 'true'}
 					>
 						<main className="flex-grow">{children}</main>
 					</VisualEditingLayout>

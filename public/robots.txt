@@ -2,6 +2,9 @@ User-agent: *
 Allow: /
 Disallow: /.env
 Disallow: /.git
+Disallow: /api/draft
+Disallow: /preview/
+Disallow: /write
 Disallow: /wp-admin
 Disallow: /wp-login.php
 Disallow: /xmlrpc.php

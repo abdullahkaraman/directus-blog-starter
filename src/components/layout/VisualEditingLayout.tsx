@@ -10,6 +10,7 @@ interface VisualEditingLayoutProps {
 	headerNavigation: any;
 	footerNavigation: any;
 	globals: any;
+	publicWriteEnabled: boolean;
 	children: ReactNode;
 }
 
@@ -17,6 +18,7 @@ export default function VisualEditingLayout({
 	headerNavigation,
 	footerNavigation,
 	globals,
+	publicWriteEnabled,
 	children,
 }: VisualEditingLayoutProps) {
 	const navRef = useRef<HTMLElement>(null);
@@ -45,7 +47,12 @@ export default function VisualEditingLayout({
 
 	return (
 		<>
-			<NavigationBar ref={navRef} navigation={headerNavigation} globals={globals} />
+			<NavigationBar
+				ref={navRef}
+				navigation={headerNavigation}
+				globals={globals}
+				publicWriteEnabled={publicWriteEnabled}
+			/>
 			{children}
 			<Footer ref={footerRef} navigation={footerNavigation} globals={globals} />
 		</>

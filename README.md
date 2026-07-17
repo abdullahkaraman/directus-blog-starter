@@ -9,6 +9,7 @@ A production-oriented blog foundation built with Next.js 15, React 19, TypeScrip
 - Draft preview protected by a dedicated secret.
 - Directus visual editing support.
 - Dynamic forms and reusable content blocks.
+- Optional authenticated writing and publishing editor.
 - Sitemap generation, responsive navigation, and theme support.
 - Generated TypeScript types for the Directus schema.
 
@@ -38,6 +39,9 @@ DIRECTUS_SERVER_TOKEN=replace_with_a_least_privilege_runtime_token
 DRAFT_PREVIEW_SECRET=replace_with_a_long_random_preview_secret
 DIRECTUS_ADMIN_TOKEN=replace_with_a_local_type_generation_token
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+ENABLE_PUBLIC_WRITE=false
+WRITE_ACCESS_USERNAME=writer
+WRITE_ACCESS_PASSWORD=replace_with_at_least_16_random_characters
 ```
 
 `DIRECTUS_SERVER_TOKEN` is server-only and must never be exposed to browser code. Grant it only the permissions the
@@ -52,6 +56,23 @@ https://your-site.example/api/draft?slug={{slug}}&token=YOUR_PREVIEW_SECRET
 ```
 
 If the preview secret is missing, draft preview remains disabled.
+
+## Optional Writing Editor
+
+The starter includes a protected `/write` editor. It is disabled by default and returns `404` until explicitly enabled:
+
+```env
+ENABLE_PUBLIC_WRITE=true
+WRITE_ACCESS_USERNAME=writer
+WRITE_ACCESS_PASSWORD=replace_with_at_least_16_random_characters
+```
+
+The password must contain at least 16 characters. When enabled, middleware requires HTTP Basic authentication and the
+publishing server action verifies the same credentials again before creating a Directus post. The runtime Directus token
+must have `posts.create` permission for publishing to succeed.
+
+Keep the editor disabled when it is not needed. Do not use a Directus token or preview secret as the write password.
+Enable it only on an HTTPS deployment because HTTP Basic credentials are sent with each authenticated request.
 
 ## Development
 
@@ -82,7 +103,7 @@ Run `pnpm generate:types` after changing the Directus schema. The command reads 
 - Draft preview uses a dedicated secret instead of the Directus runtime token.
 - Sensitive environment files, build output, and dependencies are ignored by Git.
 - Common secret and CMS probe paths are rejected by middleware.
-- The repository does not include a public publishing route.
+- The optional publishing route is disabled by default, protected by Basic Auth, and re-authorized in its server action.
 
 ## Project Structure
 
