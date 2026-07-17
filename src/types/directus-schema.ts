@@ -18,26 +18,6 @@ export interface ExtensionSeoMetadata {
     no_follow?: boolean;
 }
 
-export interface AiPrompt {
-	/** @primaryKey */
-	id: string;
-	sort?: number | null;
-	/** @description Unique name for the prompt. Use names like "create-article" or "generate-product-description". @required */
-	name: string;
-	/** @description Is this prompt published and available to use? */
-	status?: 'draft' | 'in_review' | 'published';
-	/** @description Briefly explain what this prompt does in 1-2 sentences. */
-	description?: string | null;
-	/** @description Optional: Define the conversation structure between users and AI. Used to add context and improve outputs. */
-	messages?: Array<{ role: 'user' | 'assistant'; text: string }> | null;
-	/** @description Instructions that shape how the AI responds. */
-	system_prompt?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
-
 export interface BlockButton {
 	/** @primaryKey */
 	id: string;
@@ -313,10 +293,6 @@ export interface Globals {
 	favicon?: DirectusFile | string | null;
 	/** @description Main logo shown on the site (for light mode). */
 	logo?: DirectusFile | string | null;
-	/** @description Secret OpenAI API key. Don't share with anyone outside your team. */
-	openai_api_key?: string | null;
-	/** @description The public URL for this Directus instance. Used in Flows. */
-	directus_url?: string | null;
 	/** @description Main logo shown on the site (for dark mode). */
 	logo_dark_mode?: DirectusFile | string | null;
 	/** @description Accent color for the website (used on buttons, links, etc). */
@@ -1019,7 +995,6 @@ export interface DirectusOauthToken {
 }
 
 export interface Schema {
-	ai_prompts: AiPrompt[];
 	block_button: BlockButton[];
 	block_button_group: BlockButtonGroup[];
 	block_form: BlockForm[];
@@ -1077,7 +1052,6 @@ export interface Schema {
 }
 
 export enum CollectionNames {
-	ai_prompts = 'ai_prompts',
 	block_button = 'block_button',
 	block_button_group = 'block_button_group',
 	block_form = 'block_form',

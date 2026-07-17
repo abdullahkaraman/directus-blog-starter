@@ -8,6 +8,9 @@
 		"start": "next start",
 		"test": "tsx --test tests/*.test.ts",
 		"generate:types": "tsx ./src/lib/directus/generateDirectusTypes.ts",
+		"directus:setup": "tsx ./scripts/directus-schema.ts",
+		"directus:setup:apply": "tsx ./scripts/directus-schema.ts --apply",
+		"directus:schema:pull": "tsx ./scripts/directus-schema.ts --pull",
 		"lint": "next lint",
 		"lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
 		"format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\""

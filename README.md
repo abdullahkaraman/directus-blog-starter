@@ -20,7 +20,7 @@ site-specific SEO tooling belong in the application built on top of it.
 
 - Node.js 22 or newer.
 - pnpm 10 or newer.
-- A Directus project using the collections represented in `src/types/directus-schema.ts`.
+- A Directus 12 project and a local admin token for the initial schema setup.
 
 ## Setup
 
@@ -45,8 +45,8 @@ WRITE_ACCESS_PASSWORD=replace_with_at_least_16_random_characters
 ```
 
 `DIRECTUS_SERVER_TOKEN` is server-only and must never be exposed to browser code. Grant it only the permissions the
-runtime needs. `DIRECTUS_ADMIN_TOKEN` is used only by the local type-generation command and should not be configured in
-the deployed application.
+runtime needs. `DIRECTUS_ADMIN_TOKEN` is used only by local schema and type-generation commands and should not be
+configured in the deployed application.
 
 `DRAFT_PREVIEW_SECRET` must be different from every Directus token. Configure the Directus preview URL to send this
 value as the `token` query parameter:
@@ -56,6 +56,36 @@ https://your-site.example/api/draft?slug={{slug}}&token=YOUR_PREVIEW_SECRET
 ```
 
 If the preview secret is missing, draft preview remains disabled.
+
+## Directus Schema Setup
+
+The starter includes a sanitized Directus schema snapshot at `directus/snapshot.json`. It contains the collections,
+fields, and relations required by the application, but no content records, credentials, roles, permissions, or personal
+AI configuration.
+
+First inspect the changes against your Directus project:
+
+    pnpm directus:setup
+
+This command is a dry run and never changes Directus. Use it with a new, dedicated Directus project for the starter.
+Apply the reported diff explicitly:
+
+    pnpm directus:setup:apply
+
+If the target already has unrelated collections or fields, the diff can contain deletions. `directus:setup:apply`
+refuses such a diff by default. Only after reviewing a backup of a project that you own should you explicitly use
+`pnpm directus:setup -- --apply --allow-destructive`.
+
+Both commands read `NEXT_PUBLIC_DIRECTUS_URL` and `DIRECTUS_ADMIN_TOKEN` from `.env`. Use the admin token only on your
+local machine, remove it after setup if it is no longer needed, and never add it to a deployment.
+
+After intentionally changing the schema, an administrator can refresh the committed snapshot:
+
+    pnpm directus:schema:pull
+
+The pull command applies the same sanitization rules before writing the file. Review the resulting diff before
+committing it. The snapshot provisions structure only; configure public/runtime permissions and add initial singleton
+content in Directus separately.
 
 ## Optional Writing Editor
 
@@ -90,12 +120,16 @@ pnpm build
 pnpm start
 pnpm test
 pnpm generate:types
+pnpm directus:setup
+pnpm directus:setup:apply
+pnpm directus:schema:pull
 pnpm lint
 pnpm format
 ```
 
 Run `pnpm generate:types` after changing the Directus schema. The command reads `NEXT_PUBLIC_DIRECTUS_URL` and
-`DIRECTUS_ADMIN_TOKEN` from `.env`.
+`DIRECTUS_ADMIN_TOKEN` from `.env`. Run `pnpm directus:setup` before applying schema changes so the diff can be reviewed
+first.
 
 ## Security Defaults
 
@@ -104,6 +138,8 @@ Run `pnpm generate:types` after changing the Directus schema. The command reads 
 - Sensitive environment files, build output, and dependencies are ignored by Git.
 - Common secret and CMS probe paths are rejected by middleware.
 - The optional publishing route is disabled by default, protected by Basic Auth, and re-authorized in its server action.
+- Schema setup is dry-run by default, rejects deletions without an explicit acknowledgement, and strips private AI and
+  credential-management fields from pulled snapshots.
 
 ## Project Structure
 
@@ -112,6 +148,8 @@ src/app        Next.js routes and API handlers
 src/components Shared UI, layout, form, and content-block components
 src/lib        Directus access and application utilities
 src/styles     Global styles
+directus       Sanitized, versioned Directus schema snapshot
+scripts        Local schema and type-generation utilities
 src/types      Generated Directus schema types
 tests          Focused security and query tests
 public         Static assets
