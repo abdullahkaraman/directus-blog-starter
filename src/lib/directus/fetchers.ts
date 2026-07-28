@@ -1,5 +1,5 @@
 import { BlockPost, Globals, Page, PageBlock, Post, Redirect, Schema } from '@/types/directus-schema';
-import { getDirectusServerToken, useDirectus } from './directus';
+import { getDirectus, getDirectusServerToken } from './directus';
 import { readItems, aggregate, readItem, readSingleton, withToken, QueryFilter } from '@directus/sdk';
 import { RedirectError } from '../redirects';
 import { cache } from 'react';
@@ -128,7 +128,7 @@ const formatDirectusError = (error: unknown) => {
  * Fetches page data by permalink, including all nested blocks and dynamically fetching blog posts if required.
  */
 export const fetchPageData = async (permalink: string, postPage = 1, token?: string, preview?: boolean) => {
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const effectiveToken = token || getDirectusServerToken();
 
 	try {
@@ -158,7 +158,8 @@ export const fetchPageData = async (permalink: string, postPage = 1, token?: str
 		// Some blocks need additional data fetched at runtime
 		// This is where we enhance static block data with dynamic content
 		if (Array.isArray(page.blocks)) {
-			for (const block of page.blocks as PageBlock[]) {
+			await Promise.all(
+				(page.blocks as PageBlock[]).map(async (block) => {
 				// Handle dynamic posts blocks - these blocks display a list of posts
 				// The posts are fetched dynamically based on the block's configuration
 				if (
@@ -189,7 +190,8 @@ export const fetchPageData = async (permalink: string, postPage = 1, token?: str
 					// Attach the fetched posts to the block for frontend rendering
 					(block.item as BlockPost & { posts: Post[] }).posts = posts;
 				}
-			}
+				}),
+			);
 		}
 
 		return page;
@@ -202,7 +204,7 @@ export const fetchPageData = async (permalink: string, postPage = 1, token?: str
 /**
  * Fetches page data by id and version
  */
-export const fetchPageDataById = async (id: string, version?: string, token?: string): Promise<Page> => {
+const fetchPageDataById = async (id: string, version?: string, token?: string): Promise<Page> => {
 	if (!id || id.trim() === '') {
 		throw new Error('Invalid id: id must be a non-empty string');
 	}
@@ -210,7 +212,7 @@ export const fetchPageDataById = async (id: string, version?: string, token?: st
 		throw new Error('Invalid version: version must be a non-empty string');
 	}
 
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const effectiveToken = token || getDirectusServerToken();
 
 	try {
@@ -235,12 +237,12 @@ export const fetchPageDataById = async (id: string, version?: string, token?: st
 /**
  * Helper function to get page ID by permalink
  */
-export const getPageIdByPermalink = async (permalink: string, token?: string) => {
+const getPageIdByPermalink = async (permalink: string, token?: string) => {
 	if (!permalink || permalink.trim() === '') {
 		throw new Error('Invalid permalink: permalink must be a non-empty string');
 	}
 
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const effectiveToken = token || getDirectusServerToken();
 
 	try {
@@ -271,7 +273,7 @@ export const getPostIdBySlug = async (slug: string, token?: string) => {
 		throw new Error('Invalid slug: slug must be a non-empty string');
 	}
 
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const effectiveToken = token || getDirectusServerToken();
 
 	try {
@@ -313,7 +315,7 @@ export const fetchPostByIdAndVersion = async (
 		throw new Error('Invalid slug: slug must be a non-empty string');
 	}
 
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const effectiveToken = token || getDirectusServerToken();
 
 	try {
@@ -366,7 +368,7 @@ export const fetchSiteData = cache(
 		headerNavigation: SiteNavigation;
 		footerNavigation: SiteNavigation;
 	}> => {
-		const { directus } = useDirectus();
+		const { directus } = getDirectus();
 		const token = getDirectusServerToken();
 
 		try {
@@ -466,7 +468,7 @@ export const fetchPostBySlug = async (
 	slug: string,
 	options?: { draft?: boolean; token?: string },
 ): Promise<{ post: Post | null; relatedPosts: Post[] }> => {
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const { draft, token } = options || {};
 	const effectiveToken = token || getDirectusServerToken();
 
@@ -523,7 +525,7 @@ export const fetchPostBySlug = async (
  * so the homepage can render a graceful fallback instead of failing the route.
  */
 export const fetchHomepagePosts = async (limit = 9): Promise<Post[]> => {
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const token = getDirectusServerToken();
 	const baseFields = ['id', 'title', 'description', 'slug', 'image', 'published_at'] as const;
 	const authorField = {
@@ -562,7 +564,7 @@ export const fetchHomepagePosts = async (limit = 9): Promise<Post[]> => {
  * Fetches paginated blog posts.
  */
 export const fetchPaginatedPosts = async (limit: number, page: number): Promise<Post[]> => {
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const token = getDirectusServerToken();
 	try {
 		const response = (await directus.request(
@@ -589,7 +591,7 @@ export const fetchPaginatedPosts = async (limit: number, page: number): Promise<
  * Fetches the total number of published blog posts.
  */
 export const fetchTotalPostCount = async (): Promise<number> => {
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const token = getDirectusServerToken();
 
 	try {
@@ -614,7 +616,7 @@ export const fetchTotalPostCount = async (): Promise<number> => {
 };
 
 export async function fetchRedirects(): Promise<Pick<Redirect, 'url_from' | 'url_to' | 'response_code'>[]> {
-	const { directus } = useDirectus();
+	const { directus } = getDirectus();
 	const token = getDirectusServerToken();
 	const response = await directus.request(
 		withToken(

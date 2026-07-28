@@ -1,10 +1,8 @@
 'use client';
 import * as React from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
-
-const ThemeContext = createContext({ theme: 'light', setTheme: (theme: string) => {} });
 
 export function ThemeProvider({ children, ...props }: React.ComponentProps<typeof NextThemesProvider>) {
 	const [theme, setTheme] = useState('light');
@@ -35,4 +33,3 @@ export function ThemeProvider({ children, ...props }: React.ComponentProps<typeo
 		</NextThemesProvider>
 	);
 }
-export const useTheme = () => useContext(ThemeContext);

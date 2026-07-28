@@ -72,18 +72,17 @@ export default async function Page({
 		return <MediumHomePage globals={globals} posts={posts} />;
 	}
 
-	try {
-		const page = await fetchPageData(resolvedPermalink);
-
-		if (!page || !page.blocks) {
-			notFound();
-		}
-
-		const blocks: PageBlock[] = (page.blocks as PageBlock[]) || [];
-
-		return <PageClient sections={blocks} pageId={page.id} />;
-	} catch (error) {
+	const page = await fetchPageData(resolvedPermalink).catch((error: unknown) => {
 		console.warn('Error loading page:', error instanceof Error ? error.message : String(error));
+
+		return null;
+	});
+
+	if (!page || !page.blocks) {
 		notFound();
 	}
+
+	const blocks: PageBlock[] = (page.blocks as PageBlock[]) || [];
+
+	return <PageClient sections={blocks} pageId={page.id} />;
 }

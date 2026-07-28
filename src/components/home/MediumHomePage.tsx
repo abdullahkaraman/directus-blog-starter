@@ -143,15 +143,20 @@ function ArticleRow({ post }: { post: PostWithAuthor }) {
 }
 
 function Sidebar({ posts }: { posts: PostWithAuthor[] }) {
-	const authors = posts
-		.map((post) => post.author)
-		.filter((author): author is NonNullable<Post['author']> => Boolean(author))
-		.filter((author, index, list) => {
-			if (typeof author === 'string') return list.indexOf(author) === index;
+	const authors: NonNullable<Post['author']>[] = [];
+	const seenAuthorIds = new Set<string>();
 
-			return list.findIndex((item) => typeof item !== 'string' && item.id === author.id) === index;
-		})
-		.slice(0, 3);
+	for (const post of posts) {
+		const author = post.author;
+		if (!author) continue;
+
+		const authorId = typeof author === 'string' ? author : author.id;
+		if (seenAuthorIds.has(authorId)) continue;
+
+		seenAuthorIds.add(authorId);
+		authors.push(author);
+		if (authors.length === 3) break;
+	}
 
 	return (
 		<aside className="space-y-10 lg:sticky lg:top-24 lg:self-start">

@@ -9,6 +9,7 @@ interface CheckboxGroupFieldProps {
 
 const CheckboxGroupField = ({ name, options, form }: CheckboxGroupFieldProps) => {
 	const currentValues = form.watch(name) || [];
+	const currentValueSet = new Set(currentValues);
 
 	const toggleValue = (value: string, checked?: boolean) => {
 		const updatedValues = checked ? [...currentValues, value] : currentValues.filter((v: string) => v !== value);
@@ -21,7 +22,7 @@ const CheckboxGroupField = ({ name, options, form }: CheckboxGroupFieldProps) =>
 				<div key={option.value} className="flex items-center gap-x-2">
 					<Checkbox
 						id={`${name}-${option.value}`}
-						checked={currentValues.includes(option.value)}
+						checked={currentValueSet.has(option.value)}
 						onCheckedChange={(checked) => toggleValue(option.value, !!checked)}
 					/>
 					<label htmlFor={`${name}-${option.value}`} className="text-sm">

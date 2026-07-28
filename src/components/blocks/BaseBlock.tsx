@@ -15,17 +15,17 @@ interface BaseBlockProps {
 	};
 }
 
-const BaseBlock = ({ block }: BaseBlockProps) => {
-	const components: Record<string, React.ElementType> = {
-		block_hero: Hero,
-		block_richtext: RichText,
-		block_gallery: Gallery,
-		block_pricing: Pricing,
-		block_posts: Posts,
-		block_form: Form,
-	};
+const blockComponents: Record<string, React.ElementType> = {
+	block_hero: Hero,
+	block_richtext: RichText,
+	block_gallery: Gallery,
+	block_pricing: Pricing,
+	block_posts: Posts,
+	block_form: Form,
+};
 
-	const Component = components[block.collection];
+const BaseBlock = ({ block }: BaseBlockProps) => {
+	const Component = blockComponents[block.collection];
 
 	if (!Component) {
 		return null;

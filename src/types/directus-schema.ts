@@ -1051,7 +1051,7 @@ export interface Schema {
 	directus_oauth_tokens: DirectusOauthToken[];
 }
 
-export enum CollectionNames {
+enum CollectionNames {
 	block_button = 'block_button',
 	block_button_group = 'block_button_group',
 	block_form = 'block_form',

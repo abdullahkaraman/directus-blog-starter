@@ -4,7 +4,7 @@ import { createItem, withToken } from '@directus/sdk';
 import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 
-import { getDirectusServerToken, useDirectus } from '@/lib/directus/directus';
+import { getDirectus, getDirectusServerToken } from '@/lib/directus/directus';
 import { calculateReadTimeValue, stripHtml } from '@/lib/posts';
 import { sanitizeHtml } from '@/lib/sanitize-html.server';
 import { auth } from '@/lib/write-auth';
@@ -61,7 +61,7 @@ export async function publishPostAction(_state: WriteActionState, formData: Form
 
 	try {
 		const token = getDirectusServerToken();
-		const { directus } = useDirectus();
+		const { directus } = getDirectus();
 		const post = await directus.request<Post>(withToken(token, createItem('posts', payload)));
 
 		createdSlug = post.slug || slug;

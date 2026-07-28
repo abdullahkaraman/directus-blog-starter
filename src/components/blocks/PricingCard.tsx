@@ -100,8 +100,8 @@ const PricingCard = ({ card }: PricingCardProps) => {
 							mode: 'popover',
 						})}
 					>
-						{card.features.map((feature, index) => (
-							<li key={index} className="flex items-center gap-3 text-regular">
+						{card.features.map((feature) => (
+							<li key={feature} className="flex items-center gap-3 text-regular">
 								<div className="mt-1">
 									<CheckCircle2 className="size-4 text-gray-muted" />
 								</div>

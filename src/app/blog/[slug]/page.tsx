@@ -37,16 +37,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
 	const { slug } = await params;
 
-	try {
-		const { post, relatedPosts } = await fetchPostBySlug(slug);
-
-		if (!post) {
-			notFound();
-		}
-
-		return <BlogPostArticle post={post} relatedPosts={relatedPosts} slug={slug} />;
-	} catch (error) {
+	const result = await fetchPostBySlug(slug).catch((error: unknown) => {
 		console.warn('Error loading blog post:', error instanceof Error ? error.message : String(error));
+
+		return null;
+	});
+
+	if (!result?.post) {
 		notFound();
 	}
+
+	return <BlogPostArticle post={result.post} relatedPosts={result.relatedPosts} slug={slug} />;
 }

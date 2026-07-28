@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import DirectusImage from '@/components/shared/DirectusImage';
 import Tagline from '../ui/Tagline';
 import Headline from '@/components/ui/Headline';
@@ -31,7 +31,7 @@ const Gallery = ({ data }: GalleryProps) => {
 	const [isLightboxOpen, setLightboxOpen] = useState(false);
 	const [currentIndex, setCurrentIndex] = useState(0);
 
-	const sortedItems = items ? [...items].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)) : [];
+	const sortedItems = useMemo(() => items?.toSorted((a, b) => (a.sort ?? 0) - (b.sort ?? 0)) ?? [], [items]);
 	const isValidIndex = sortedItems.length > 0 && currentIndex >= 0 && currentIndex < sortedItems.length;
 
 	const handleOpenLightbox = (index: number) => {
@@ -47,17 +47,19 @@ const Gallery = ({ data }: GalleryProps) => {
 		setCurrentIndex((prev) => (prev < sortedItems.length - 1 ? prev + 1 : 0));
 	};
 
-	const handleKeyDown = (e: KeyboardEvent) => {
-		if (isLightboxOpen) {
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (!isLightboxOpen) return;
+
 			e.stopPropagation();
 			switch (e.key) {
 				case 'ArrowLeft':
 					e.preventDefault();
-					handlePrev();
+					setCurrentIndex((prev) => (prev > 0 ? prev - 1 : sortedItems.length - 1));
 					break;
 				case 'ArrowRight':
 					e.preventDefault();
-					handleNext();
+					setCurrentIndex((prev) => (prev < sortedItems.length - 1 ? prev + 1 : 0));
 					break;
 				case 'Escape':
 					e.preventDefault();
@@ -66,14 +68,12 @@ const Gallery = ({ data }: GalleryProps) => {
 				default:
 					break;
 			}
-		}
-	};
+		};
 
-	useEffect(() => {
 		window.addEventListener('keydown', handleKeyDown);
 
 		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [isLightboxOpen]);
+	}, [isLightboxOpen, sortedItems.length]);
 
 	return (
 		<section className="relative">
@@ -111,9 +111,10 @@ const Gallery = ({ data }: GalleryProps) => {
 					})}
 				>
 					{sortedItems.map((item, index) => (
-						<div
+						<button
+							type="button"
 							key={item.id}
-							className="relative overflow-hidden rounded-lg group hover:shadow-lg transition-shadow duration-300 cursor-pointer h-[300px]"
+							className="relative h-[300px] overflow-hidden rounded-lg text-left transition-shadow duration-300 hover:shadow-lg group"
 							onClick={() => handleOpenLightbox(index)}
 							aria-label={`Gallery item ${item.id}`}
 						>
@@ -131,7 +132,7 @@ const Gallery = ({ data }: GalleryProps) => {
 							<div className="absolute inset-0 bg-white bg-opacity-60 opacity-0 group-hover:opacity-100 flex justify-center items-center transition-opacity duration-300">
 								<ZoomIn className="size-10 text-gray-800" />
 							</div>
-						</div>
+						</button>
 					))}
 				</div>
 			)}
@@ -158,6 +159,7 @@ const Gallery = ({ data }: GalleryProps) => {
 						</div>
 						<div className="absolute bottom-4 inset-x-0 flex justify-between items-center px-4">
 							<button
+								type="button"
 								className="flex items-center gap-2 text-white bg-black bg-opacity-70 rounded-full px-4 py-2 hover:bg-opacity-90"
 								onClick={handlePrev}
 								aria-label="Previous"
@@ -166,6 +168,7 @@ const Gallery = ({ data }: GalleryProps) => {
 								<span>Prev</span>
 							</button>
 							<button
+								type="button"
 								className="flex items-center gap-2 text-white bg-black bg-opacity-70 rounded-full px-4 py-2 hover:bg-opacity-90"
 								onClick={handleNext}
 								aria-label="Next"
@@ -176,6 +179,7 @@ const Gallery = ({ data }: GalleryProps) => {
 						</div>
 						<DialogClose asChild>
 							<button
+								type="button"
 								className="absolute top-4 right-4 text-white bg-black bg-opacity-70 rounded-full p-2 hover:bg-opacity-90"
 								aria-label="Close"
 							>
