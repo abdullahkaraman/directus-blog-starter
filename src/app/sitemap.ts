@@ -1,4 +1,4 @@
-import { getDirectusServerToken, useDirectus } from '@/lib/directus/directus';
+import { getDirectus, getDirectusServerToken } from '@/lib/directus/directus';
 import type { MetadataRoute } from 'next';
 
 const formatDirectusError = (error: unknown) => {
@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	}
 	const fallbackSitemap = [{ url: siteUrl, lastModified: new Date().toISOString() }];
 
-	const { directus, readItems, withToken } = useDirectus();
+	const { directus, readItems, withToken } = getDirectus();
 	const token = getDirectusServerToken();
 
 	try {
@@ -47,19 +47,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 		const [pages, posts] = await Promise.all([pagesPromise, postsPromise]);
 
-		const pageUrls = pages
-			.filter((page: { permalink: string | null | undefined }) => page.permalink)
-			.map((page: { permalink: string | null | undefined }) => ({
-				url: `${process.env.NEXT_PUBLIC_SITE_URL}${page.permalink}`,
-				lastModified: new Date().toISOString(),
-			}));
+		const pageUrls = pages.reduce<MetadataRoute.Sitemap>((urls, page) => {
+			if (page.permalink) {
+				urls.push({
+					url: `${siteUrl}${page.permalink}`,
+					lastModified: new Date().toISOString(),
+				});
+			}
 
-		const postUrls = posts
-			.filter((post: { slug: string | null | undefined }) => post.slug)
-			.map((post: { slug: string | null | undefined }) => ({
-				url: `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${post.slug}`,
-				lastModified: new Date().toISOString(),
-			}));
+			return urls;
+		}, []);
+
+		const postUrls = posts.reduce<MetadataRoute.Sitemap>((urls, post) => {
+			if (post.slug) {
+				urls.push({
+					url: `${siteUrl}/blog/${post.slug}`,
+					lastModified: new Date().toISOString(),
+				});
+			}
+
+			return urls;
+		}, []);
 
 		return [...pageUrls, ...postUrls];
 	} catch (error) {

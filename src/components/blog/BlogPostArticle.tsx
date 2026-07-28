@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import parse from 'html-react-parser';
 
 import ArticleUtilityBar from '@/components/blog/ArticleUtilityBar';
 import DirectusImage from '@/components/shared/DirectusImage';
@@ -12,7 +13,8 @@ import {
 	getPostHref,
 	getPostImage,
 } from '@/lib/posts';
-import { renderRichText } from '@/lib/rich-text';
+import { editorJsToHtml } from '@/lib/rich-text';
+import { sanitizeHtml } from '@/lib/sanitize-html.server';
 import type { DirectusUser, Post } from '@/types/directus-schema';
 
 type BlogPostArticleProps = {
@@ -27,7 +29,7 @@ export default function BlogPostArticle({ post, relatedPosts, slug }: BlogPostAr
 	const postUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${slug}`;
 	const coverImage = getPostImage(post);
 	const authorAvatar = getAuthorAvatar(author);
-	const content = renderRichText(post.content);
+	const content = parse(sanitizeHtml(editorJsToHtml(post.content)));
 	const readTime = formatReadTime(post.read_time) ?? calculateReadTime(post.content);
 
 	return (
@@ -83,10 +85,9 @@ export default function BlogPostArticle({ post, relatedPosts, slug }: BlogPostAr
 			<ArticleUtilityBar postTitle={post.title} postUrl={postUrl} />
 
 			<div className="mx-auto max-w-3xl px-6 pb-16">
-				<div
-					className="prose prose-lg max-w-none bg-white font-serif text-neutral-900 prose-neutral prose-headings:font-sans prose-headings:font-semibold prose-headings:tracking-normal prose-headings:text-neutral-950 prose-p:leading-8 prose-p:text-neutral-900 prose-strong:text-neutral-950 prose-a:text-emerald-800 prose-blockquote:border-l-[6px] prose-blockquote:border-neutral-950 prose-blockquote:pl-6 prose-blockquote:font-serif prose-blockquote:text-2xl prose-blockquote:italic prose-blockquote:leading-9 prose-img:mx-auto prose-img:rounded-md prose-figcaption:text-center prose-code:rounded prose-code:bg-neutral-100 prose-code:px-1 prose-code:py-0.5 prose-code:text-[0.9em] prose-pre:rounded-md prose-pre:bg-neutral-950 prose-pre:text-neutral-100"
-					dangerouslySetInnerHTML={{ __html: content }}
-				/>
+				<div className="prose prose-lg max-w-none bg-white font-serif text-neutral-900 prose-neutral prose-headings:font-sans prose-headings:font-semibold prose-headings:tracking-normal prose-headings:text-neutral-950 prose-p:leading-8 prose-p:text-neutral-900 prose-strong:text-neutral-950 prose-a:text-emerald-800 prose-blockquote:border-l-[6px] prose-blockquote:border-neutral-950 prose-blockquote:pl-6 prose-blockquote:font-serif prose-blockquote:text-2xl prose-blockquote:italic prose-blockquote:leading-9 prose-img:mx-auto prose-img:rounded-md prose-figcaption:text-center prose-code:rounded prose-code:bg-neutral-100 prose-code:px-1 prose-code:py-0.5 prose-code:text-[0.9em] prose-pre:rounded-md prose-pre:bg-neutral-950 prose-pre:text-neutral-100">
+					{content}
+				</div>
 
 				<section className="mt-16 rounded-md border border-neutral-200 bg-neutral-50 p-8">
 					<h2 className="font-serif text-3xl text-neutral-950">Get the next story in your inbox</h2>
@@ -94,7 +95,11 @@ export default function BlogPostArticle({ post, relatedPosts, slug }: BlogPostAr
 						Subscribe for thoughtful essays and product notes. No noise, just the next good read.
 					</p>
 					<form className="mt-6 flex flex-col gap-3 sm:flex-row">
+						<label htmlFor="newsletter-email" className="sr-only">
+							Email address
+						</label>
 						<input
+							id="newsletter-email"
 							type="email"
 							placeholder="Email address"
 							className="min-h-11 flex-1 rounded-full border border-neutral-300 bg-white px-4 text-sm text-neutral-900 outline-none ring-0 placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-0"

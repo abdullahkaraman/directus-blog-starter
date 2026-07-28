@@ -86,7 +86,7 @@ const directus = createDirectus<Schema>(directusUrl, {
 	},
 }).with(rest());
 
-export const useDirectus = () => ({
+export const getDirectus = () => ({
 	directus: directus as RestClient<Schema>,
 	readItems,
 	readItem,

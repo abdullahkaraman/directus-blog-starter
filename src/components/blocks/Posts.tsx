@@ -44,19 +44,29 @@ const Posts = ({ data }: PostsProps) => {
 	const [totalPages, setTotalPages] = useState(0);
 
 	useEffect(() => {
+		let cancelled = false;
+
 		const fetchTotalPages = async () => {
 			try {
 				const totalCount = await fetchTotalPostCount();
+				if (cancelled) return;
+
 				setTotalPages(Math.ceil(totalCount / perPage));
 			} catch (error) {
-				console.error('Error fetching total post count:', error);
+				if (!cancelled) console.error('Error fetching total post count:', error);
 			}
 		};
 
-		fetchTotalPages();
+		void fetchTotalPages();
+
+		return () => {
+			cancelled = true;
+		};
 	}, [perPage]);
 
 	useEffect(() => {
+		let cancelled = false;
+
 		const fetchPosts = async () => {
 			try {
 				if (currentPage === 1) {
@@ -65,14 +75,22 @@ const Posts = ({ data }: PostsProps) => {
 					return;
 				}
 				const response = await fetchPaginatedPosts(perPage, currentPage);
+				if (cancelled) return;
+
 				setPaginatedPosts(response || []);
 			} catch (error) {
-				console.error('Error fetching paginated posts:', error);
-				setPaginatedPosts([]);
+				if (!cancelled) {
+					console.error('Error fetching paginated posts:', error);
+					setPaginatedPosts([]);
+				}
 			}
 		};
 
-		fetchPosts();
+		void fetchPosts();
+
+		return () => {
+			cancelled = true;
+		};
 	}, [currentPage, perPage, posts]);
 
 	const handlePageChange = (page: number) => {
@@ -195,9 +213,9 @@ const Posts = ({ data }: PostsProps) => {
 							</PaginationItem>
 						)}
 
-						{paginationLinks.map((page, index) =>
+						{paginationLinks.map((page) =>
 							typeof page === 'number' ? (
-								<PaginationItem key={index}>
+								<PaginationItem key={`page-${page}`}>
 									<PaginationLink
 										href="#"
 										isActive={currentPage === page}
@@ -210,7 +228,7 @@ const Posts = ({ data }: PostsProps) => {
 									</PaginationLink>
 								</PaginationItem>
 							) : (
-								<PaginationItem key={index}>
+								<PaginationItem key={page}>
 									<PaginationEllipsis />
 								</PaginationItem>
 							),

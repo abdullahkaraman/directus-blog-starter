@@ -4,6 +4,12 @@ export type PostWithAuthor = Post & {
 	author?: DirectusUser | string | null;
 };
 
+const postDateFormatter = new Intl.DateTimeFormat('en', {
+	month: 'short',
+	day: 'numeric',
+	year: 'numeric',
+});
+
 export function getPostHref(post: Pick<Post, 'slug'>) {
 	return post.slug ? `/blog/${post.slug}` : '#';
 }
@@ -31,11 +37,7 @@ export function getAuthorAvatar(author?: DirectusUser | string | null) {
 export function formatPostDate(date?: string | null) {
 	if (!date) return 'Draft';
 
-	return new Intl.DateTimeFormat('en', {
-		month: 'short',
-		day: 'numeric',
-		year: 'numeric',
-	}).format(new Date(date));
+	return postDateFormatter.format(new Date(date));
 }
 
 export function stripHtml(input?: string | null) {

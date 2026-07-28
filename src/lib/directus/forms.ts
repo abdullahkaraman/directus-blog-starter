@@ -1,4 +1,4 @@
-import { getDirectusServerToken, useDirectus } from './directus';
+import { getDirectus, getDirectusServerToken } from './directus';
 import type { FormSubmission, FormSubmissionValue } from '@/types/directus-schema';
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -16,44 +16,46 @@ export const submitForm = async (
 	fields: { id: string; name: string; type: string }[],
 	data: Record<string, any>,
 ) => {
-	const { directus, uploadFiles, createItem, withToken } = useDirectus();
+	const { directus, uploadFiles, createItem, withToken } = getDirectus();
 	const token = getDirectusServerToken();
 
 	try {
-		const submissionValues: Omit<FormSubmissionValue, 'id'>[] = [];
+		const submissionValues = (
+			await Promise.all(
+				fields.map(async (field): Promise<Omit<FormSubmissionValue, 'id'> | null> => {
+					const value = data[field.name];
 
-		for (const field of fields) {
-			const value = data[field.name];
+					if (value === undefined || value === null) return null;
 
-			if (value === undefined || value === null) continue;
+					if (field.type === 'file' && value instanceof File) {
+						if (value.size > MAX_UPLOAD_BYTES) {
+							throw new Error('File is too large');
+						}
 
-			if (field.type === 'file' && value instanceof File) {
-				if (value.size > MAX_UPLOAD_BYTES) {
-					throw new Error('File is too large');
-				}
+						if (value.type && !ALLOWED_UPLOAD_TYPES.has(value.type)) {
+							throw new Error('File type is not allowed');
+						}
 
-				if (value.type && !ALLOWED_UPLOAD_TYPES.has(value.type)) {
-					throw new Error('File type is not allowed');
-				}
+						const formData = new FormData();
+						formData.append('file', value);
 
-				const formData = new FormData();
-				formData.append('file', value);
+						const uploadedFile = await directus.request(withToken(token, uploadFiles(formData)));
 
-				const uploadedFile = await directus.request(withToken(token, uploadFiles(formData)));
+						if (!uploadedFile || !('id' in uploadedFile)) return null;
 
-				if (uploadedFile && 'id' in uploadedFile) {
-					submissionValues.push({
+						return {
+							field: field.id,
+							file: uploadedFile.id,
+						};
+					}
+
+					return {
 						field: field.id,
-						file: uploadedFile.id,
-					});
-				}
-			} else {
-				submissionValues.push({
-					field: field.id,
-					value: value.toString(),
-				});
-			}
-		}
+						value: value.toString(),
+					};
+				}),
+			)
+		).filter((value): value is Omit<FormSubmissionValue, 'id'> => value !== null);
 
 		const payload = {
 			form: formId,

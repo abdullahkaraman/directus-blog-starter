@@ -1,4 +1,5 @@
-import { Button as ShadcnButton, buttonVariants } from '@/components/ui/button';
+import { Button as ShadcnButton } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import { LucideIcon, ArrowRight, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,11 @@ export interface ButtonProps {
 	block?: boolean;
 }
 
+const icons: Record<string, LucideIcon> = {
+	arrow: ArrowRight,
+	plus: Plus,
+};
+
 const Button = ({
 	id,
 	label,
@@ -38,11 +44,6 @@ const Button = ({
 	disabled = false,
 	block = false,
 }: ButtonProps) => {
-	const icons: Record<string, LucideIcon> = {
-		arrow: ArrowRight,
-		plus: Plus,
-	};
-
 	const Icon = customIcon || (icon ? icons[icon] : null);
 
 	const href = (() => {

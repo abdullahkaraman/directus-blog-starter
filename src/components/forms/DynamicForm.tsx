@@ -16,7 +16,7 @@ interface DynamicFormProps {
 }
 
 const DynamicForm = ({ fields, onSubmit, submitLabel, id }: DynamicFormProps) => {
-	const sortedFields = [...fields].sort((a, b) => (a.sort || 0) - (b.sort || 0));
+	const sortedFields = fields.toSorted((a, b) => (a.sort || 0) - (b.sort || 0));
 	const formSchema = buildZodSchema(fields);
 
 	const form = useForm({

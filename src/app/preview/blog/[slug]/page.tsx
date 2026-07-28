@@ -1,7 +1,7 @@
 import { draftMode } from 'next/headers';
 
 import BlogPostArticle from '@/components/blog/BlogPostArticle';
-import { getDirectusServerToken, useDirectus } from '@/lib/directus/directus';
+import { getDirectus, getDirectusServerToken } from '@/lib/directus/directus';
 import { fetchPostByIdAndVersion, fetchPostBySlug, getPostIdBySlug } from '@/lib/directus/fetchers';
 import { calculateReadTimeValue } from '@/lib/posts';
 import { isValidPreviewToken } from '@/lib/preview-auth';
@@ -23,7 +23,7 @@ function syncReadTime(post: Post, token: string) {
 
 	if (post.read_time === readTime) return;
 
-	const { directus, updateItem, withToken } = useDirectus();
+	const { directus, updateItem, withToken } = getDirectus();
 
 	void directus.request(withToken(token, updateItem('posts', post.id, { read_time: readTime }))).catch((error) => {
 		console.warn('Error syncing post read_time:', error instanceof Error ? error.message : String(error));

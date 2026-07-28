@@ -1,4 +1,4 @@
-import { getDirectusServerToken, useDirectus } from '@/lib/directus/directus';
+import { getDirectus, getDirectusServerToken } from '@/lib/directus/directus';
 import { createPublishedPageSearchFilter, createPublishedPostSearchFilter } from '@/lib/directus/search-filters';
 import { NextResponse } from 'next/server';
 
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 		return NextResponse.json({ error: 'Query must be at most 80 characters.' }, { status: 400 });
 	}
 
-	const { directus, readItems, withToken } = useDirectus();
+	const { directus, readItems, withToken } = getDirectus();
 	const token = getDirectusServerToken();
 
 	try {

@@ -50,7 +50,3 @@ export function sanitizeHtml(html: string) {
 		.replace(/\son\w+=(["']).*?\1/gi, '')
 		.replace(/\s(href|src)=(["'])javascript:[\s\S]*?\2/gi, '');
 }
-
-export function renderRichText(content: unknown) {
-	return sanitizeHtml(editorJsToHtml(content));
-}

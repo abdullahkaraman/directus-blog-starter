@@ -7,7 +7,7 @@ export interface RedirectError {
 	status: string;
 }
 
-export function isRedirectError(error: unknown): error is RedirectError {
+function isRedirectError(error: unknown): error is RedirectError {
 	return typeof error === 'object' && error !== null && 'type' in error && error.type === 'redirect';
 }
 
