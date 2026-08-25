@@ -9,7 +9,7 @@ const withBundleAnalyzer = initializeBundleAnalyzer({
 const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL ?? '';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 const isProduction = process.env.NODE_ENV === 'production';
-const isVisualEditingEnabled = process.env.NEXT_PUBLIC_ENABLE_VISUAL_EDITING !== 'false';
+const isVisualEditingEnabled = process.env.NEXT_PUBLIC_ENABLE_VISUAL_EDITING === 'true';
 const directusAssetPattern = (() => {
 	if (!directusUrl) return null;
 	try {
@@ -35,7 +35,7 @@ const frameAncestors = [
 const ContentSecurityPolicy = `
     default-src 'self';
     script-src 'self' 'unsafe-eval' 'unsafe-inline';
-    frame-src 'self' ${directusUrl};
+    frame-src 'self' ${isVisualEditingEnabled ? directusUrl : ''};
     style-src 'self' 'unsafe-inline';
     img-src 'self' ${directusUrl} blob: data:;
     media-src 'self' ${directusUrl};
@@ -49,11 +49,6 @@ const ContentSecurityPolicy = `
 
 const nextConfig: NextConfig = {
 	poweredByHeader: false,
-	webpack: (config) => {
-		config.cache = false;
-
-		return config;
-	},
 	images: {
 		remotePatterns: [
 			...(directusAssetPattern ? [directusAssetPattern] : []),

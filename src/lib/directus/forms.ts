@@ -1,5 +1,7 @@
+import 'server-only';
+
 import { getDirectus, getDirectusServerToken } from './directus';
-import type { FormSubmission, FormSubmissionValue } from '@/types/directus-schema';
+import type { Form, FormField, FormSubmission, FormSubmissionValue } from '@/types/directus-schema';
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_UPLOAD_TYPES = new Set([
@@ -11,18 +13,30 @@ const ALLOWED_UPLOAD_TYPES = new Set([
 	'text/plain',
 ]);
 
-export const submitForm = async (
-	formId: string,
-	fields: { id: string; name: string; type: string }[],
-	data: Record<string, any>,
-) => {
-	const { directus, uploadFiles, createItem, withToken } = getDirectus();
+export const submitForm = async (formId: string, data: Record<string, unknown>) => {
+	const { directus, readItem, uploadFiles, createItem, withToken } = getDirectus();
 	const token = getDirectusServerToken();
 
 	try {
+		const form = (await directus.request(
+			withToken(
+				token,
+				readItem('forms', formId, {
+					fields: ['id', 'is_active', { fields: ['id', 'name', 'type'] }],
+				}),
+			),
+		)) as Pick<Form, 'id' | 'is_active'> & { fields?: FormField[] | string[] | null };
+
+		if (!form.is_active) throw new Error('Form is not active');
+
+		const fields = (Array.isArray(form.fields) ? form.fields : []).filter(
+			(field): field is FormField => typeof field === 'object' && field !== null,
+		);
 		const submissionValues = (
 			await Promise.all(
 				fields.map(async (field): Promise<Omit<FormSubmissionValue, 'id'> | null> => {
+					if (!field.name || !field.type) return null;
+
 					const value = data[field.name];
 
 					if (value === undefined || value === null) return null;
@@ -44,13 +58,13 @@ export const submitForm = async (
 						if (!uploadedFile || !('id' in uploadedFile)) return null;
 
 						return {
-							field: field.id,
+							field: String(field.id),
 							file: uploadedFile.id,
 						};
 					}
 
 					return {
-						field: field.id,
+						field: String(field.id),
 						value: value.toString(),
 					};
 				}),

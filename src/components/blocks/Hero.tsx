@@ -1,12 +1,10 @@
-'use client';
-
 import Tagline from '../ui/Tagline';
 import Headline from '@/components/ui/Headline';
 import BaseText from '@/components/ui/Text';
 import DirectusImage from '@/components/shared/DirectusImage';
 import ButtonGroup from '@/components/blocks/ButtonGroup';
 import { cn } from '@/lib/utils';
-import { setAttr } from '@directus/visual-editing';
+import { visualEditingAttr } from '@/lib/directus/visual-editing-attributes';
 
 interface HeroProps {
 	data: {
@@ -53,7 +51,7 @@ export default function Hero({ data }: HeroProps) {
 			>
 				<Tagline
 					tagline={tagline}
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_hero',
 						item: id,
 						fields: 'tagline',
@@ -62,7 +60,7 @@ export default function Hero({ data }: HeroProps) {
 				/>
 				<Headline
 					headline={headline}
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_hero',
 						item: id,
 						fields: 'headline',
@@ -72,7 +70,7 @@ export default function Hero({ data }: HeroProps) {
 				{description && (
 					<BaseText
 						content={description}
-						data-directus={setAttr({
+						data-directus={visualEditingAttr({
 							collection: 'block_hero',
 							item: id,
 							fields: 'description',
@@ -83,7 +81,7 @@ export default function Hero({ data }: HeroProps) {
 				{button_group && button_group.buttons.length > 0 && (
 					<div
 						className={cn(layout === 'image_center' && 'flex justify-center', 'mt-6')}
-						data-directus={setAttr({
+						data-directus={visualEditingAttr({
 							collection: 'block_button_group',
 							item: button_group.id,
 							fields: 'buttons',
@@ -100,7 +98,7 @@ export default function Hero({ data }: HeroProps) {
 						'relative w-full',
 						layout === 'image_center' ? 'md:w-3/4 xl:w-2/3 h-[400px]' : 'md:w-1/2 h-[562px]',
 					)}
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_hero',
 						item: id,
 						fields: ['image', 'layout'],

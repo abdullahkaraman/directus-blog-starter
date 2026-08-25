@@ -1,9 +1,7 @@
-'use client';
-
 import Tagline from '@/components/ui/Tagline';
 import Headline from '@/components/ui/Headline';
 import PricingCard from '@/components/blocks/PricingCard';
-import { setAttr } from '@directus/visual-editing';
+import { visualEditingAttr } from '@/lib/directus/visual-editing-attributes';
 
 interface PricingCardType {
 	id: string;
@@ -51,7 +49,7 @@ const Pricing = ({ data }: PricingProps) => {
 			{tagline && (
 				<Tagline
 					tagline={tagline}
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_pricing',
 						item: id,
 						fields: 'tagline',
@@ -62,7 +60,7 @@ const Pricing = ({ data }: PricingProps) => {
 			{headline && (
 				<Headline
 					headline={headline}
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_pricing',
 						item: id,
 						fields: 'headline',
@@ -72,7 +70,7 @@ const Pricing = ({ data }: PricingProps) => {
 			)}
 			<div
 				className={`grid gap-6 mt-8 ${gridClasses}`}
-				data-directus={setAttr({
+				data-directus={visualEditingAttr({
 					collection: 'block_pricing',
 					item: id,
 					fields: ['pricing_cards'],

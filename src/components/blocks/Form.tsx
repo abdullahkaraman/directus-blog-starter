@@ -1,8 +1,6 @@
-'use client';
-
 import { FormField } from '@/types/directus-schema';
-import FormBuilder from '../forms/FormBuilder';
-import { setAttr } from '@directus/visual-editing';
+import FormIsland from '@/components/islands/FormIsland.client';
+import { visualEditingAttr } from '@/lib/directus/visual-editing-attributes';
 
 interface FormBlockProps {
 	data: {
@@ -37,7 +35,7 @@ const FormBlock = ({ data }: FormBlockProps) => {
 			{tagline && (
 				<p
 					className="mx-auto max-w-lg text-base leading-7 text-neutral-500"
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_form',
 						item: data.id,
 						fields: 'tagline',
@@ -51,7 +49,7 @@ const FormBlock = ({ data }: FormBlockProps) => {
 			{headline && (
 				<h1
 					className="font-serif text-5xl leading-tight text-neutral-950"
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_form',
 						item: data.id,
 						fields: 'headline',
@@ -64,14 +62,14 @@ const FormBlock = ({ data }: FormBlockProps) => {
 
 			<div
 				className="text-left"
-				data-directus={setAttr({
+				data-directus={visualEditingAttr({
 					collection: 'block_form',
 					item: data.id,
 					fields: ['form'],
 					mode: 'popover',
 				})}
 			>
-				<FormBuilder form={form} className="mt-8" />
+				<FormIsland form={form} className="mt-8" />
 			</div>
 		</section>
 	);

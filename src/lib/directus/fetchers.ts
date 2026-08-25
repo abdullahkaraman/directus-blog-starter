@@ -1,6 +1,8 @@
+import 'server-only';
+
 import { BlockPost, Globals, Page, PageBlock, Post, Redirect, Schema } from '@/types/directus-schema';
 import { getDirectus, getDirectusServerToken } from './directus';
-import { readItems, aggregate, readItem, readSingleton, withToken, QueryFilter } from '@directus/sdk';
+import { readItems, aggregate, readItem, readSingleton, withOptions, withToken, QueryFilter } from '@directus/sdk';
 import { RedirectError } from '../redirects';
 import { cache } from 'react';
 
@@ -132,21 +134,22 @@ export const fetchPageData = async (permalink: string, postPage = 1, token?: str
 	const effectiveToken = token || getDirectusServerToken();
 
 	try {
-		const pageData = (await directus.request(
-			withToken(
-				effectiveToken as string,
-				readItems('pages', {
-					filter: preview
-						? { permalink: { _eq: permalink } }
-						: { permalink: { _eq: permalink }, status: { _eq: 'published' } },
-					limit: 1,
-					fields: pageFields as any,
-					deep: {
-						blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
-					},
-				}),
-			),
-		)) as Page[];
+		const pageCommand = withToken(
+			effectiveToken as string,
+			readItems<Schema, 'pages', any>('pages', {
+				filter: preview
+					? { permalink: { _eq: permalink } }
+					: { permalink: { _eq: permalink }, status: { _eq: 'published' } },
+				limit: 1,
+				fields: pageFields as any,
+				deep: {
+					blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
+				},
+			}),
+		);
+		const pageData = await directus.request<Page[]>(
+			preview ? withOptions(pageCommand, { cache: 'no-store' }) : pageCommand,
+		);
 
 		if (!pageData.length) {
 			throw new Error('Page not found');
@@ -160,36 +163,36 @@ export const fetchPageData = async (permalink: string, postPage = 1, token?: str
 		if (Array.isArray(page.blocks)) {
 			await Promise.all(
 				(page.blocks as PageBlock[]).map(async (block) => {
-				// Handle dynamic posts blocks - these blocks display a list of posts
-				// The posts are fetched dynamically based on the block's configuration
-				if (
-					block.collection === 'block_posts' &&
-					block.item &&
-					typeof block.item !== 'string' &&
-					'collection' in block.item &&
-					block.item.collection === 'posts'
-				) {
-					const blockPost = block.item as BlockPost;
-					const limit = blockPost.limit ?? 6; // Default to 6 posts if no limit specified
+					// Handle dynamic posts blocks - these blocks display a list of posts
+					// The posts are fetched dynamically based on the block's configuration
+					if (
+						block.collection === 'block_posts' &&
+						block.item &&
+						typeof block.item !== 'string' &&
+						'collection' in block.item &&
+						block.item.collection === 'posts'
+					) {
+						const blockPost = block.item as BlockPost;
+						const limit = blockPost.limit ?? 6; // Default to 6 posts if no limit specified
 
-					// Fetch the actual posts data for this block
-					// Always fetch published posts only (no preview mode for dynamic content)
-					const posts: Post[] = await directus.request(
-						withToken(
-							effectiveToken as string,
-							readItems('posts', {
-								filter: { status: { _eq: 'published' } },
-								fields: ['id', 'title', 'description', 'slug', 'image', 'published_at'],
-								sort: ['-published_at', '-date_created'],
-								limit,
-								page: postPage,
-							}),
-						),
-					);
+						// Fetch the actual posts data for this block
+						// Always fetch published posts only (no preview mode for dynamic content)
+						const posts: Post[] = await directus.request(
+							withToken(
+								effectiveToken as string,
+								readItems('posts', {
+									filter: { status: { _eq: 'published' } },
+									fields: ['id', 'title', 'description', 'slug', 'image', 'published_at'],
+									sort: ['-published_at', '-date_created'],
+									limit,
+									page: postPage,
+								}),
+							),
+						);
 
-					// Attach the fetched posts to the block for frontend rendering
-					(block.item as BlockPost & { posts: Post[] }).posts = posts;
-				}
+						// Attach the fetched posts to the block for frontend rendering
+						(block.item as BlockPost & { posts: Post[] }).posts = posts;
+					}
 				}),
 			);
 		}
@@ -277,16 +280,15 @@ export const getPostIdBySlug = async (slug: string, token?: string) => {
 	const effectiveToken = token || getDirectusServerToken();
 
 	try {
-		const postData = (await directus.request(
-			withToken(
-				effectiveToken as string,
-				readItems('posts', {
-					filter: { slug: { _eq: slug } },
-					limit: 1,
-					fields: ['id'],
-				}),
-			),
-		)) as Pick<Post, 'id'>[];
+		const command = withToken(
+			effectiveToken as string,
+			readItems<Schema, 'posts', any>('posts', {
+				filter: { slug: { _eq: slug } },
+				limit: 1,
+				fields: ['id'],
+			}),
+		);
+		const postData = await directus.request<Pick<Post, 'id'>[]>(withOptions(command, { cache: 'no-store' }));
 
 		return postData.length > 0 ? postData[0].id : null;
 	} catch (error) {
@@ -319,40 +321,38 @@ export const fetchPostByIdAndVersion = async (
 	const effectiveToken = token || getDirectusServerToken();
 
 	try {
+		const postCommand = withToken(
+			effectiveToken as string,
+			readItem<Schema, 'posts', any>('posts', id, {
+				version,
+				fields: [
+					'id',
+					'title',
+					'content',
+					'image',
+					'description',
+					'slug',
+					'published_at',
+					{
+						author: ['id', 'first_name', 'last_name', 'email', 'avatar', 'description'],
+					},
+				],
+			}),
+		);
+		const relatedCommand = withToken(
+			effectiveToken as string,
+			readItems<Schema, 'posts', any>('posts', {
+				filter: { slug: { _neq: slug }, status: { _eq: 'published' } },
+				limit: 2,
+				fields: ['id', 'title', 'slug', 'image', 'description'],
+			}),
+		);
 		const [postData, relatedPosts] = await Promise.all([
-			directus.request(
-				withToken(
-					effectiveToken as string,
-					readItem('posts', id, {
-						version,
-						fields: [
-							'id',
-							'title',
-							'content',
-							'image',
-							'description',
-							'slug',
-							'published_at',
-							{
-								author: ['id', 'first_name', 'last_name', 'email', 'avatar', 'description'],
-							},
-						],
-					}),
-				),
-			),
-			directus.request(
-				withToken(
-					effectiveToken as string,
-					readItems('posts', {
-						filter: { slug: { _neq: slug } },
-						limit: 2,
-						fields: ['id', 'title', 'slug', 'image', 'description'],
-					}),
-				),
-			),
+			directus.request<Post>(withOptions(postCommand, { cache: 'no-store' })),
+			directus.request<Post[]>(withOptions(relatedCommand, { cache: 'no-store' })),
 		]);
 
-		return { post: postData as Post, relatedPosts: relatedPosts as Post[] };
+		return { post: postData, relatedPosts };
 	} catch (error) {
 		console.warn('Error fetching versioned post:', formatDirectusError(error));
 		throw new Error('Failed to fetch versioned post');
@@ -368,10 +368,9 @@ export const fetchSiteData = cache(
 		headerNavigation: SiteNavigation;
 		footerNavigation: SiteNavigation;
 	}> => {
-		const { directus } = getDirectus();
-		const token = getDirectusServerToken();
-
 		try {
+			const { directus } = getDirectus();
+			const token = getDirectusServerToken();
 			const [globals, headerNavigation, footerNavigation] = await Promise.all([
 				directus.request(
 					withToken(
@@ -477,38 +476,36 @@ export const fetchPostBySlug = async (
 			? { slug: { _eq: slug } }
 			: { slug: { _eq: slug }, status: { _eq: 'published' } };
 
+		const postCommand = withToken(
+			effectiveToken as string,
+			readItems<Schema, 'posts', any>('posts', {
+				filter,
+				limit: 1,
+				fields: [
+					'id',
+					'title',
+					'content',
+					'image',
+					'description',
+					'slug',
+					'published_at',
+					{
+						author: ['id', 'first_name', 'last_name', 'email', 'avatar', 'description'],
+					},
+				],
+			}),
+		);
+		const relatedCommand = withToken(
+			effectiveToken as string,
+			readItems<Schema, 'posts', any>('posts', {
+				filter: { slug: { _neq: slug }, status: { _eq: 'published' } },
+				limit: 2,
+				fields: ['id', 'title', 'slug', 'image', 'description'],
+			}),
+		);
 		const [posts, relatedPosts] = await Promise.all([
-			directus.request<Post[]>(
-				withToken(
-					effectiveToken as string,
-					readItems<Schema, 'posts', any>('posts', {
-						filter,
-						limit: 1,
-						fields: [
-							'id',
-							'title',
-							'content',
-							'image',
-							'description',
-							'slug',
-							'published_at',
-							{
-								author: ['id', 'first_name', 'last_name', 'email', 'avatar', 'description'],
-							},
-						],
-					}),
-				),
-			),
-			directus.request<Post[]>(
-				withToken(
-					effectiveToken as string,
-					readItems<Schema, 'posts', any>('posts', {
-						filter: { slug: { _neq: slug }, status: { _eq: 'published' } },
-						limit: 2,
-						fields: ['id', 'title', 'slug', 'image', 'description'],
-					}),
-				),
-			),
+			directus.request<Post[]>(draft ? withOptions(postCommand, { cache: 'no-store' }) : postCommand),
+			directus.request<Post[]>(draft ? withOptions(relatedCommand, { cache: 'no-store' }) : relatedCommand),
 		]);
 
 		const post: Post | null = posts.length > 0 ? (posts[0] as Post) : null;
@@ -525,38 +522,38 @@ export const fetchPostBySlug = async (
  * so the homepage can render a graceful fallback instead of failing the route.
  */
 export const fetchHomepagePosts = async (limit = 9): Promise<Post[]> => {
-	const { directus } = getDirectus();
-	const token = getDirectusServerToken();
 	const baseFields = ['id', 'title', 'description', 'slug', 'image', 'published_at'] as const;
 	const authorField = {
 		author: ['id', 'first_name', 'last_name', 'email', 'avatar', 'description'],
 	};
 
-	const fetchPosts = (fields: any[]) =>
-		directus.request<Post[]>(
-			withToken(
-				token as string,
-				readItems<Schema, 'posts', any>('posts', {
-					filter: { status: { _eq: 'published' } },
-					limit,
-					sort: ['-published_at', '-date_created'],
-					fields,
-				}),
-			),
-		) as Promise<Post[]>;
-
 	try {
-		return await fetchPosts([...baseFields, 'read_time', authorField]);
+		const { directus } = getDirectus();
+		const token = getDirectusServerToken();
+		const fetchPosts = (fields: any[]) =>
+			directus.request<Post[]>(
+				withToken(
+					token,
+					readItems<Schema, 'posts', any>('posts', {
+						filter: { status: { _eq: 'published' } },
+						limit,
+						sort: ['-published_at', '-date_created'],
+						fields,
+					}),
+				),
+			) as Promise<Post[]>;
+
+		try {
+			return await fetchPosts([...baseFields, 'read_time', authorField]);
+		} catch (error) {
+			console.warn('Error fetching homepage posts with read_time:', formatDirectusError(error));
+
+			return await fetchPosts([...baseFields, authorField]);
+		}
 	} catch (error) {
 		console.warn('Error fetching homepage posts:', formatDirectusError(error));
 
-		try {
-			return await fetchPosts([...baseFields, authorField]);
-		} catch (fallbackError) {
-			console.warn('Error fetching homepage posts without read_time:', formatDirectusError(fallbackError));
-
-			return [];
-		}
+		return [];
 	}
 };
 
@@ -591,10 +588,9 @@ export const fetchPaginatedPosts = async (limit: number, page: number): Promise<
  * Fetches the total number of published blog posts.
  */
 export const fetchTotalPostCount = async (): Promise<number> => {
-	const { directus } = getDirectus();
-	const token = getDirectusServerToken();
-
 	try {
+		const { directus } = getDirectus();
+		const token = getDirectusServerToken();
 		const response = await directus.request(
 			withToken(
 				token as string,

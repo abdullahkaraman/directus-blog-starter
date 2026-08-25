@@ -1,12 +1,9 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronFirst, ChevronLast } from 'lucide-react';
-import Tagline from '../ui/Tagline';
+import Link from 'next/link';
+
+import Tagline from '@/components/ui/Tagline';
 import Headline from '@/components/ui/Headline';
 import DirectusImage from '@/components/shared/DirectusImage';
-import Link from 'next/link';
 import {
 	Pagination,
 	PaginationContent,
@@ -15,11 +12,11 @@ import {
 	PaginationLink,
 	PaginationNext,
 	PaginationPrevious,
-} from '../ui/pagination';
-import { Post } from '@/types/directus-schema';
-import { fetchPaginatedPosts, fetchTotalPostCount } from '@/lib/directus/fetchers';
-import { setAttr } from '@directus/visual-editing';
+} from '@/components/ui/pagination';
+import { fetchTotalPostCount } from '@/lib/directus/fetchers';
+import { visualEditingAttr } from '@/lib/directus/visual-editing-attributes';
 import { getPostExcerpt, getPostImage } from '@/lib/posts';
+import type { Post } from '@/types/directus-schema';
 
 interface PostsProps {
 	data: {
@@ -29,102 +26,45 @@ interface PostsProps {
 		posts: Post[];
 		limit: number;
 	};
+	currentPage?: number;
 }
 
-const Posts = ({ data }: PostsProps) => {
-	const { tagline, headline, posts, limit, id } = data;
-	const router = useRouter();
-	const searchParams = useSearchParams();
-	const visiblePages = 5;
-	const initialPage = Number(searchParams.get('page')) || 1;
-	const perPage = limit || 6;
+const VISIBLE_PAGES = 5;
 
-	const [currentPage, setCurrentPage] = useState(initialPage);
-	const [paginatedPosts, setPaginatedPosts] = useState<Post[]>(currentPage === 1 ? posts || [] : []);
-	const [totalPages, setTotalPages] = useState(0);
+function generatePagination(currentPage: number, totalPages: number) {
+	const pages: (number | 'ellipsis-start' | 'ellipsis-end')[] = [];
 
-	useEffect(() => {
-		let cancelled = false;
-
-		const fetchTotalPages = async () => {
-			try {
-				const totalCount = await fetchTotalPostCount();
-				if (cancelled) return;
-
-				setTotalPages(Math.ceil(totalCount / perPage));
-			} catch (error) {
-				if (!cancelled) console.error('Error fetching total post count:', error);
-			}
-		};
-
-		void fetchTotalPages();
-
-		return () => {
-			cancelled = true;
-		};
-	}, [perPage]);
-
-	useEffect(() => {
-		let cancelled = false;
-
-		const fetchPosts = async () => {
-			try {
-				if (currentPage === 1) {
-					setPaginatedPosts(posts || []);
-
-					return;
-				}
-				const response = await fetchPaginatedPosts(perPage, currentPage);
-				if (cancelled) return;
-
-				setPaginatedPosts(response || []);
-			} catch (error) {
-				if (!cancelled) {
-					console.error('Error fetching paginated posts:', error);
-					setPaginatedPosts([]);
-				}
-			}
-		};
-
-		void fetchPosts();
-
-		return () => {
-			cancelled = true;
-		};
-	}, [currentPage, perPage, posts]);
-
-	const handlePageChange = (page: number) => {
-		if (page >= 1 && page <= totalPages) {
-			setCurrentPage(page);
-			router.replace(`?page=${page}`, { scroll: false });
-		}
-	};
-
-	const generatePagination = () => {
-		const pages: (number | string)[] = [];
-		if (totalPages <= visiblePages) {
-			for (let i = 1; i <= totalPages; i++) {
-				pages.push(i);
-			}
-		} else {
-			const rangeStart = Math.max(1, currentPage - 2);
-			const rangeEnd = Math.min(totalPages, currentPage + 2);
-			if (rangeStart > 1) pages.push('ellipsis-start');
-			for (let i = rangeStart; i <= rangeEnd; i++) pages.push(i);
-			if (rangeEnd < totalPages) pages.push('ellipsis-end');
-		}
+	if (totalPages <= VISIBLE_PAGES) {
+		for (let page = 1; page <= totalPages; page += 1) pages.push(page);
 
 		return pages;
-	};
+	}
 
-	const paginationLinks = generatePagination();
+	const rangeStart = Math.max(1, currentPage - 2);
+	const rangeEnd = Math.min(totalPages, currentPage + 2);
+
+	if (rangeStart > 1) pages.push('ellipsis-start');
+	for (let page = rangeStart; page <= rangeEnd; page += 1) pages.push(page);
+	if (rangeEnd < totalPages) pages.push('ellipsis-end');
+
+	return pages;
+}
+
+const pageHref = (page: number) => `?page=${page}`;
+
+export default async function Posts({ data, currentPage = 1 }: PostsProps) {
+	const { tagline, headline, posts = [], limit, id } = data;
+	const perPage = limit || 6;
+	const totalCount = await fetchTotalPostCount();
+	const totalPages = Math.ceil(totalCount / perPage);
+	const paginationLinks = generatePagination(currentPage, totalPages);
 
 	return (
 		<div>
 			{tagline && (
 				<Tagline
 					tagline={tagline}
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_posts',
 						item: id,
 						fields: 'tagline',
@@ -135,7 +75,7 @@ const Posts = ({ data }: PostsProps) => {
 			{headline && (
 				<Headline
 					headline={headline}
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_posts',
 						item: id,
 						fields: 'headline',
@@ -145,36 +85,36 @@ const Posts = ({ data }: PostsProps) => {
 			)}
 
 			<div
-				className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
-				data-directus={setAttr({
+				className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3"
+				data-directus={visualEditingAttr({
 					collection: 'block_posts',
 					item: id,
 					fields: ['collection', 'limit'],
 					mode: 'popover',
 				})}
 			>
-				{paginatedPosts && paginatedPosts.length > 0 ? (
-					paginatedPosts.map((post) => {
+				{posts.length > 0 ? (
+					posts.map((post) => {
 						const image = getPostImage(post);
 
 						return (
 							<Link key={post.id} href={`/blog/${post.slug}`} className="group block overflow-hidden rounded-lg">
-								<div className="relative w-full h-64 rounded-lg overflow-hidden">
+								<div className="relative h-64 w-full overflow-hidden rounded-lg">
 									{image && (
 										<DirectusImage
 											uuid={image}
 											alt={post.title || 'article image'}
 											fill
 											sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-											className="w-full h-auto object-cover rounded-lg transition-transform duration-300 group-hover:scale-110"
+											className="h-auto w-full rounded-lg object-cover transition-transform duration-300 group-hover:scale-110"
 										/>
 									)}
 								</div>
 								<div className="p-4">
-									<h3 className="text-xl group-hover:text-accent font-heading transition-colors duration-300">
+									<h3 className="font-heading text-xl transition-colors duration-300 group-hover:text-accent">
 										{post.title}
 									</h3>
-									{getPostExcerpt(post) && <p className="text-sm text-foreground mt-2">{getPostExcerpt(post)}</p>}
+									{getPostExcerpt(post) && <p className="mt-2 text-sm text-foreground">{getPostExcerpt(post)}</p>}
 								</div>
 							</Link>
 						);
@@ -185,45 +125,25 @@ const Posts = ({ data }: PostsProps) => {
 			</div>
 
 			{totalPages > 1 && (
-				<Pagination>
+				<Pagination className="mt-8">
 					<PaginationContent>
-						{totalPages > visiblePages && currentPage > 1 && (
+						{currentPage > 1 && totalPages > VISIBLE_PAGES && (
 							<PaginationItem>
-								<PaginationLink
-									href="#"
-									onClick={(e) => {
-										e.preventDefault();
-										handlePageChange(1);
-									}}
-								>
+								<PaginationLink href={pageHref(1)} aria-label="Go to first page">
 									<ChevronFirst className="size-5" />
 								</PaginationLink>
 							</PaginationItem>
 						)}
-
-						{totalPages > visiblePages && currentPage > 1 && (
+						{currentPage > 1 && (
 							<PaginationItem>
-								<PaginationPrevious
-									href="#"
-									onClick={(e) => {
-										e.preventDefault();
-										handlePageChange(currentPage - 1);
-									}}
-								/>
+								<PaginationPrevious href={pageHref(currentPage - 1)} />
 							</PaginationItem>
 						)}
 
 						{paginationLinks.map((page) =>
 							typeof page === 'number' ? (
-								<PaginationItem key={`page-${page}`}>
-									<PaginationLink
-										href="#"
-										isActive={currentPage === page}
-										onClick={(e) => {
-											e.preventDefault();
-											handlePageChange(page);
-										}}
-									>
+								<PaginationItem key={page}>
+									<PaginationLink href={pageHref(page)} isActive={currentPage === page}>
 										{page}
 									</PaginationLink>
 								</PaginationItem>
@@ -234,27 +154,14 @@ const Posts = ({ data }: PostsProps) => {
 							),
 						)}
 
-						{totalPages > visiblePages && currentPage < totalPages && (
+						{currentPage < totalPages && (
 							<PaginationItem>
-								<PaginationNext
-									href="#"
-									onClick={(e) => {
-										e.preventDefault();
-										handlePageChange(currentPage + 1);
-									}}
-								/>
+								<PaginationNext href={pageHref(currentPage + 1)} />
 							</PaginationItem>
 						)}
-
-						{totalPages > visiblePages && currentPage < totalPages && (
+						{currentPage < totalPages && totalPages > VISIBLE_PAGES && (
 							<PaginationItem>
-								<PaginationLink
-									href="#"
-									onClick={(e) => {
-										e.preventDefault();
-										handlePageChange(totalPages);
-									}}
-								>
+								<PaginationLink href={pageHref(totalPages)} aria-label="Go to last page">
 									<ChevronLast className="size-5" />
 								</PaginationLink>
 							</PaginationItem>
@@ -264,6 +171,4 @@ const Posts = ({ data }: PostsProps) => {
 			)}
 		</div>
 	);
-};
-
-export default Posts;
+}

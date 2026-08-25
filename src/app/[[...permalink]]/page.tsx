@@ -1,19 +1,10 @@
-import {
-	fetchHomepagePosts,
-	fetchPageData,
-	fetchSiteData,
-} from '@/lib/directus/fetchers';
+import { fetchHomepagePosts, fetchPageData, fetchSiteData } from '@/lib/directus/fetchers';
 import { PageBlock } from '@/types/directus-schema';
 import { notFound } from 'next/navigation';
-import PageClient from './PageClient';
+import PageBuilder from '@/components/layout/PageBuilder';
 import MediumHomePage from '@/components/home/MediumHomePage';
 
-export const dynamic = 'force-static';
 export const revalidate = 300;
-
-export async function generateStaticParams() {
-	return [];
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ permalink?: string[] }> }) {
 	const { permalink } = await params;
@@ -59,10 +50,15 @@ export async function generateMetadata({ params }: { params: Promise<{ permalink
 
 export default async function Page({
 	params,
+	searchParams,
 }: {
 	params: Promise<{ permalink?: string[] }>;
+	searchParams: Promise<{ page?: string }>;
 }) {
 	const { permalink } = await params;
+	const { page: requestedPage } = await searchParams;
+	const parsedPage = Number.parseInt(requestedPage || '1', 10);
+	const currentPage = Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 	const permalinkSegments = permalink || [];
 	const resolvedPermalink = `/${permalinkSegments.join('/')}`.replace(/\/$/, '') || '/';
 
@@ -72,7 +68,7 @@ export default async function Page({
 		return <MediumHomePage globals={globals} posts={posts} />;
 	}
 
-	const page = await fetchPageData(resolvedPermalink).catch((error: unknown) => {
+	const page = await fetchPageData(resolvedPermalink, currentPage).catch((error: unknown) => {
 		console.warn('Error loading page:', error instanceof Error ? error.message : String(error));
 
 		return null;
@@ -84,5 +80,5 @@ export default async function Page({
 
 	const blocks: PageBlock[] = (page.blocks as PageBlock[]) || [];
 
-	return <PageClient sections={blocks} pageId={page.id} />;
+	return <PageBuilder sections={blocks} currentPage={currentPage} />;
 }

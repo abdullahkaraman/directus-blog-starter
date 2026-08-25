@@ -1,6 +1,8 @@
+import 'server-only';
+
 import sanitizeHtmlLibrary from 'sanitize-html';
 
-const allowedTags = sanitizeHtmlLibrary.defaults.allowedTags.concat(['figure', 'figcaption', 'img']);
+const allowedTags = sanitizeHtmlLibrary.defaults.allowedTags.concat(['figure', 'figcaption', 'iframe', 'img']);
 
 function isExternalHttpLink(href?: string) {
 	if (!href) return false;
@@ -41,6 +43,7 @@ export function sanitizeHtml(html: string) {
 				'title',
 				'width',
 			],
+			iframe: ['allow', 'allowfullscreen', 'height', 'loading', 'referrerpolicy', 'src', 'title', 'width'],
 		},
 		allowedSchemes: ['http', 'https', 'mailto', 'tel'],
 		allowProtocolRelative: false,

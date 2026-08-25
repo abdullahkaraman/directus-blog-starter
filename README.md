@@ -7,7 +7,7 @@ A production-oriented blog foundation built with Next.js 15, React 19, TypeScrip
 - Dynamic pages and blog posts backed by Directus.
 - Published-only public search.
 - Draft preview protected by a dedicated secret.
-- Directus visual editing support.
+- Opt-in Directus visual editing on authenticated preview routes.
 - Dynamic forms and reusable content blocks.
 - Optional authenticated writing and publishing editor.
 - Sitemap generation, responsive navigation, and theme support.
@@ -40,6 +40,7 @@ DRAFT_PREVIEW_SECRET=replace_with_a_long_random_preview_secret
 DIRECTUS_ADMIN_TOKEN=replace_with_a_local_type_generation_token
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ENABLE_PUBLIC_WRITE=false
+NEXT_PUBLIC_ENABLE_VISUAL_EDITING=false
 WRITE_ACCESS_USERNAME=writer
 WRITE_ACCESS_PASSWORD=replace_with_at_least_16_random_characters
 ```
@@ -56,6 +57,14 @@ https://your-site.example/api/draft?slug={{slug}}&token=YOUR_PREVIEW_SECRET
 ```
 
 If the preview secret is missing, draft preview remains disabled.
+
+Visual editing is disabled by default. Set `NEXT_PUBLIC_ENABLE_VISUAL_EDITING=true` only when Directus is configured to
+open an authenticated `/preview/*` route. The visual-editing browser package is dynamically loaded on preview routes;
+public content routes do not load it. Generic Directus pages can use:
+
+```text
+https://your-site.example/preview{{permalink}}?token=YOUR_PREVIEW_SECRET
+```
 
 ## Directus Schema Setup
 
@@ -117,6 +126,7 @@ Open `http://localhost:3000`.
 ```bash
 pnpm dev
 pnpm build
+pnpm check:public-bundle
 pnpm start
 pnpm test
 pnpm generate:types
@@ -135,6 +145,8 @@ first.
 
 - Public search explicitly filters pages and posts to `status = published`.
 - Draft preview uses a dedicated secret instead of the Directus runtime token.
+- Directus SDK, preview authentication, sanitization, and form mutation modules are protected by server-only boundaries.
+- Form submissions reload the active form fields on the server instead of trusting field identifiers supplied by the browser.
 - Sensitive environment files, build output, and dependencies are ignored by Git.
 - Common secret and CMS probe paths are rejected by middleware.
 - The optional publishing route is disabled by default, protected by Basic Auth, and re-authorized in its server action.

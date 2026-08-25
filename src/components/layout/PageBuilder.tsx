@@ -4,9 +4,10 @@ import Container from '@/components/ui/container';
 
 interface PageBuilderProps {
 	sections: PageBlock[];
+	currentPage?: number;
 }
 
-const PageBuilder = ({ sections }: PageBuilderProps) => {
+const PageBuilder = ({ sections, currentPage }: PageBuilderProps) => {
 	const validBlocks = sections.filter(
 		(block): block is PageBlock & { collection: string; item: object } =>
 			typeof block.collection === 'string' && !!block.item && typeof block.item === 'object',
@@ -23,6 +24,7 @@ const PageBuilder = ({ sections }: PageBuilderProps) => {
 								item: block.item,
 								id: block.id,
 							}}
+							currentPage={currentPage}
 						/>
 					</Container>
 				</div>

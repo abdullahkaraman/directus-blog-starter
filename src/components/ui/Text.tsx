@@ -1,4 +1,4 @@
-import { sanitizeHtml } from '@/lib/rich-text';
+import { sanitizeHtml } from '@/lib/sanitize-html.server';
 import { cn } from '@/lib/utils';
 
 export interface TextProps {
