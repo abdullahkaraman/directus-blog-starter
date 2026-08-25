@@ -3,8 +3,9 @@ import '@/styles/fonts.css';
 import { ReactNode } from 'react';
 import { Metadata } from 'next';
 
-import VisualEditingLayout from '@/components/layout/VisualEditingLayout';
-import { ThemeProvider } from '@/components/ui/ThemeProvider';
+import NavigationBar from '@/components/layout/NavigationBar';
+import Footer from '@/components/layout/Footer';
+import VisualEditingBridge from '@/components/islands/VisualEditingBridge.client';
 import { fetchSiteData } from '@/lib/directus/fetchers';
 import { getDirectusAssetURL } from '@/lib/directus/directus-utils';
 
@@ -30,20 +31,20 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: ReactNode }) {
 	const { globals, headerNavigation, footerNavigation } = await fetchSiteData();
 	const accentColor = globals?.accent_color || '#6644ff';
+	const visualEditingEnabled = process.env.NEXT_PUBLIC_ENABLE_VISUAL_EDITING === 'true';
+	const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL?.trim();
 
 	return (
-		<html lang="en" style={{ '--accent-color': accentColor } as React.CSSProperties} suppressHydrationWarning>
+		<html lang="en" style={{ '--accent-color': accentColor } as React.CSSProperties}>
 			<body className="antialiased font-sans flex flex-col min-h-screen">
-				<ThemeProvider>
-					<VisualEditingLayout
-						headerNavigation={headerNavigation}
-						footerNavigation={footerNavigation}
-						globals={globals}
-						publicWriteEnabled={process.env.ENABLE_PUBLIC_WRITE === 'true'}
-					>
-						<main className="flex-grow">{children}</main>
-					</VisualEditingLayout>
-				</ThemeProvider>
+				<NavigationBar
+					navigation={headerNavigation}
+					globals={globals}
+					publicWriteEnabled={process.env.ENABLE_PUBLIC_WRITE === 'true'}
+				/>
+				<main className="flex-grow">{children}</main>
+				<Footer navigation={footerNavigation} globals={globals} />
+				{visualEditingEnabled && directusUrl ? <VisualEditingBridge directusUrl={directusUrl} /> : null}
 			</body>
 		</html>
 	);

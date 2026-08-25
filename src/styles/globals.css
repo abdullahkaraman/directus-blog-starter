@@ -21,6 +21,15 @@
 	--foreground-color: #ffffff; /* Default dark text */
 }
 
+@media (prefers-color-scheme: dark) {
+	:root {
+		--background-color: #0e1a2b;
+		--background-color-muted: color-mix(in srgb, var(--background-color), var(--foreground-color) 10%);
+		--background-variant-color: #172940;
+		--foreground-color: #ffffff;
+	}
+}
+
 @layer base {
 	html {
 		@apply bg-[var(--background-color)] text-[var(--foreground-color)];
@@ -57,5 +66,11 @@
 @layer utilities {
 	a {
 		@apply transition-colors no-underline;
+	}
+
+	.prose iframe {
+		aspect-ratio: 16 / 9;
+		height: auto;
+		width: 100%;
 	}
 }

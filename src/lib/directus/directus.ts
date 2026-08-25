@@ -1,3 +1,5 @@
+import 'server-only';
+
 import {
 	createDirectus,
 	readItems,
@@ -38,6 +40,9 @@ const withDirectusCache = (input: RequestInfo | URL, init?: RequestInit): Parame
 	if (method !== 'GET' && method !== 'HEAD') {
 		return init ? [input, init] : [input];
 	}
+	if (init?.cache === 'no-store') {
+		return [input, init];
+	}
 
 	const nextInit = init as NextFetchInit | undefined;
 
@@ -68,7 +73,21 @@ const fetchRetry = async (count: number, ...args: Parameters<typeof fetch>) => {
 // Queue for rate-limited requests
 const queue = new Queue({ intervalCap: 10, interval: 500, carryoverConcurrencyCount: true });
 
-const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL as string;
+let directus: RestClient<Schema> | null = null;
+
+const getDirectusUrl = () => {
+	const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL?.trim();
+
+	if (!directusUrl) {
+		throw new Error('NEXT_PUBLIC_DIRECTUS_URL is not defined. Check your .env file.');
+	}
+
+	try {
+		return new URL(directusUrl).toString();
+	} catch {
+		throw new Error('NEXT_PUBLIC_DIRECTUS_URL must be a valid absolute URL.');
+	}
+};
 
 export const getDirectusServerToken = () => {
 	const token = process.env.DIRECTUS_SERVER_TOKEN?.trim();
@@ -80,20 +99,24 @@ export const getDirectusServerToken = () => {
 	return token;
 };
 
-const directus = createDirectus<Schema>(directusUrl, {
-	globals: {
-		fetch: (...args) => queue.add(() => fetchRetry(0, ...args)),
-	},
-}).with(rest());
+export const getDirectus = () => {
+	if (!directus) {
+		directus = createDirectus<Schema>(getDirectusUrl(), {
+			globals: {
+				fetch: (...args) => queue.add(() => fetchRetry(0, ...args)),
+			},
+		}).with(rest()) as RestClient<Schema>;
+	}
 
-export const getDirectus = () => ({
-	directus: directus as RestClient<Schema>,
-	readItems,
-	readItem,
-	readSingleton,
-	readUser,
-	createItem,
-	updateItem,
-	uploadFiles,
-	withToken,
-});
+	return {
+		directus,
+		readItems,
+		readItem,
+		readSingleton,
+		readUser,
+		createItem,
+		updateItem,
+		uploadFiles,
+		withToken,
+	};
+};

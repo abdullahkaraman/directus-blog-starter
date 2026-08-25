@@ -1,5 +1,3 @@
-'use client';
-
 import RichText from '@/components/blocks/RichText';
 import Hero from '@/components/blocks/Hero';
 import Gallery from '@/components/blocks/Gallery';
@@ -13,26 +11,27 @@ interface BaseBlockProps {
 		item: any;
 		id: string;
 	};
+	currentPage?: number;
 }
 
-const blockComponents: Record<string, React.ElementType> = {
-	block_hero: Hero,
-	block_richtext: RichText,
-	block_gallery: Gallery,
-	block_pricing: Pricing,
-	block_posts: Posts,
-	block_form: Form,
-};
-
-const BaseBlock = ({ block }: BaseBlockProps) => {
-	const Component = blockComponents[block.collection];
-
-	if (!Component) {
-		return null;
-	}
+export default function BaseBlock({ block, currentPage }: BaseBlockProps) {
 	const itemId = block.item?.id;
+	const sharedProps = { data: block.item, blockId: block.id, itemId };
 
-	return <Component data={block.item} blockId={block.id} itemId={itemId} />;
-};
-
-export default BaseBlock;
+	switch (block.collection) {
+		case 'block_hero':
+			return <Hero {...sharedProps} />;
+		case 'block_richtext':
+			return <RichText {...sharedProps} />;
+		case 'block_gallery':
+			return <Gallery {...sharedProps} />;
+		case 'block_pricing':
+			return <Pricing {...sharedProps} />;
+		case 'block_posts':
+			return <Posts {...sharedProps} currentPage={currentPage} />;
+		case 'block_form':
+			return <Form {...sharedProps} />;
+		default:
+			return null;
+	}
+}

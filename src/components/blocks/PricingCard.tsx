@@ -1,10 +1,7 @@
-'use client';
-
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import Button from '@/components/blocks/Button';
 import { CheckCircle2 } from 'lucide-react';
-import { setAttr } from '@directus/visual-editing';
+import { visualEditingAttr } from '@/lib/directus/visual-editing-attributes';
 
 export interface PricingCardProps {
 	card: {
@@ -34,7 +31,7 @@ const PricingCard = ({ card }: PricingCardProps) => {
 			<div className="flex justify-between items-start gap-2 mb-4">
 				<h3
 					className="text-xl font-heading text-foreground"
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_pricing_cards',
 						item: card.id,
 						fields: ['title'],
@@ -48,7 +45,7 @@ const PricingCard = ({ card }: PricingCardProps) => {
 						<Badge
 							variant={card.is_highlighted ? 'secondary' : 'default'}
 							className="text-xs font-medium uppercase"
-							data-directus={setAttr({
+							data-directus={visualEditingAttr({
 								collection: 'block_pricing_cards',
 								item: card.id,
 								fields: ['badge'],
@@ -63,7 +60,7 @@ const PricingCard = ({ card }: PricingCardProps) => {
 			{card.price && (
 				<p
 					className="text-h2 mt-2 font-semibold"
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_pricing_cards',
 						item: card.id,
 						fields: ['price'],
@@ -76,7 +73,7 @@ const PricingCard = ({ card }: PricingCardProps) => {
 			{card.description && (
 				<p
 					className="text-description mt-2 line-clamp-2"
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_pricing_cards',
 						item: card.id,
 						fields: ['description'],
@@ -87,13 +84,13 @@ const PricingCard = ({ card }: PricingCardProps) => {
 				</p>
 			)}
 
-			<Separator className="my-4" />
+			<div aria-hidden className="my-4 h-px w-full shrink-0 bg-input" />
 
 			<div className="flex-grow">
 				{card.features && Array.isArray(card.features) && (
 					<ul
 						className="space-y-4"
-						data-directus={setAttr({
+						data-directus={visualEditingAttr({
 							collection: 'block_pricing_cards',
 							item: card.id,
 							fields: ['features'],
@@ -115,7 +112,7 @@ const PricingCard = ({ card }: PricingCardProps) => {
 				{card.button && (
 					<Button
 						id={card.button.id}
-						data-directus={setAttr({
+						data-directus={visualEditingAttr({
 							collection: 'block_button',
 							item: card.button.id,
 							fields: ['type', 'label', 'variant', 'url', 'page', 'post'],

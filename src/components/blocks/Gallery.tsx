@@ -1,12 +1,10 @@
-'use client';
+import { ZoomIn } from 'lucide-react';
 
-import { useEffect, useMemo, useState } from 'react';
 import DirectusImage from '@/components/shared/DirectusImage';
-import Tagline from '../ui/Tagline';
+import GalleryLightbox from '@/components/islands/GalleryLightbox.client';
+import Tagline from '@/components/ui/Tagline';
 import Headline from '@/components/ui/Headline';
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { ArrowLeft, ArrowRight, ZoomIn, X } from 'lucide-react';
-import { setAttr } from '@directus/visual-editing';
+import { visualEditingAttr } from '@/lib/directus/visual-editing-attributes';
 
 interface GalleryItem {
 	id: string;
@@ -25,62 +23,16 @@ interface GalleryProps {
 	data: GalleryData;
 }
 
-const Gallery = ({ data }: GalleryProps) => {
+export default function Gallery({ data }: GalleryProps) {
 	const { tagline, headline, items, id } = data;
-
-	const [isLightboxOpen, setLightboxOpen] = useState(false);
-	const [currentIndex, setCurrentIndex] = useState(0);
-
-	const sortedItems = useMemo(() => items?.toSorted((a, b) => (a.sort ?? 0) - (b.sort ?? 0)) ?? [], [items]);
-	const isValidIndex = sortedItems.length > 0 && currentIndex >= 0 && currentIndex < sortedItems.length;
-
-	const handleOpenLightbox = (index: number) => {
-		setCurrentIndex(index);
-		setLightboxOpen(true);
-	};
-
-	const handlePrev = () => {
-		setCurrentIndex((prev) => (prev > 0 ? prev - 1 : sortedItems.length - 1));
-	};
-
-	const handleNext = () => {
-		setCurrentIndex((prev) => (prev < sortedItems.length - 1 ? prev + 1 : 0));
-	};
-
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (!isLightboxOpen) return;
-
-			e.stopPropagation();
-			switch (e.key) {
-				case 'ArrowLeft':
-					e.preventDefault();
-					setCurrentIndex((prev) => (prev > 0 ? prev - 1 : sortedItems.length - 1));
-					break;
-				case 'ArrowRight':
-					e.preventDefault();
-					setCurrentIndex((prev) => (prev < sortedItems.length - 1 ? prev + 1 : 0));
-					break;
-				case 'Escape':
-					e.preventDefault();
-					setLightboxOpen(false);
-					break;
-				default:
-					break;
-			}
-		};
-
-		window.addEventListener('keydown', handleKeyDown);
-
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [isLightboxOpen, sortedItems.length]);
+	const sortedItems = items?.toSorted((a, b) => (a.sort ?? 0) - (b.sort ?? 0)) ?? [];
 
 	return (
 		<section className="relative">
 			{tagline && (
 				<Tagline
 					tagline={tagline}
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_gallery',
 						item: id,
 						fields: 'tagline',
@@ -91,7 +43,7 @@ const Gallery = ({ data }: GalleryProps) => {
 			{headline && (
 				<Headline
 					headline={headline}
-					data-directus={setAttr({
+					data-directus={visualEditingAttr({
 						collection: 'block_gallery',
 						item: id,
 						fields: 'headline',
@@ -101,96 +53,45 @@ const Gallery = ({ data }: GalleryProps) => {
 			)}
 
 			{sortedItems.length > 0 && (
-				<div
-					className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
-					data-directus={setAttr({
-						collection: 'block_gallery',
-						item: id,
-						fields: 'items',
-						mode: 'modal',
-					})}
-				>
-					{sortedItems.map((item, index) => (
-						<button
-							type="button"
-							key={item.id}
-							className="relative h-[300px] overflow-hidden rounded-lg text-left transition-shadow duration-300 hover:shadow-lg group"
-							onClick={() => handleOpenLightbox(index)}
-							aria-label={`Gallery item ${item.id}`}
-						>
-							{item.directus_file ? (
-								<DirectusImage
-									uuid={item.directus_file}
-									alt={`Gallery item ${item.id}`}
-									fill
-									sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-									className="w-full h-auto object-cover rounded-lg"
-								/>
-							) : (
-								<div className="flex items-center justify-center h-full text-sm text-gray-500">Image not available</div>
-							)}
-							<div className="absolute inset-0 bg-white bg-opacity-60 opacity-0 group-hover:opacity-100 flex justify-center items-center transition-opacity duration-300">
-								<ZoomIn className="size-10 text-gray-800" />
-							</div>
-						</button>
-					))}
-				</div>
-			)}
-
-			{isLightboxOpen && isValidIndex && (
-				<Dialog open={isLightboxOpen} onOpenChange={setLightboxOpen}>
-					<DialogContent
-						className="flex max-w-full max-h-full items-center justify-center p-2 bg-transparent border-none z-50"
-						hideCloseButton
+				<GalleryLightbox items={sortedItems}>
+					<div
+						className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3"
+						data-directus={visualEditingAttr({
+							collection: 'block_gallery',
+							item: id,
+							fields: 'items',
+							mode: 'modal',
+						})}
 					>
-						<DialogTitle className="sr-only">Gallery Image</DialogTitle>
-						<DialogDescription className="sr-only">
-							Viewing image {currentIndex + 1} of {sortedItems.length}.
-						</DialogDescription>
-
-						<div className="relative flex justify-center items-center w-[90vw] h-[90vh]">
-							<DirectusImage
-								uuid={sortedItems[currentIndex].directus_file}
-								alt={`Gallery item ${sortedItems[currentIndex].id}`}
-								width={1200}
-								height={800}
-								className="size-full object-contain"
-							/>
-						</div>
-						<div className="absolute bottom-4 inset-x-0 flex justify-between items-center px-4">
+						{sortedItems.map((item, index) => (
 							<button
 								type="button"
-								className="flex items-center gap-2 text-white bg-black bg-opacity-70 rounded-full px-4 py-2 hover:bg-opacity-90"
-								onClick={handlePrev}
-								aria-label="Previous"
+								key={item.id}
+								data-gallery-index={index}
+								className="group relative h-[300px] overflow-hidden rounded-lg text-left transition-shadow duration-300 hover:shadow-lg"
+								aria-label={`Open gallery item ${index + 1}`}
 							>
-								<ArrowLeft className="size-8" />
-								<span>Prev</span>
+								{item.directus_file ? (
+									<DirectusImage
+										uuid={item.directus_file}
+										alt={`Gallery item ${item.id}`}
+										fill
+										sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+										className="h-auto w-full rounded-lg object-cover"
+									/>
+								) : (
+									<div className="flex h-full items-center justify-center text-sm text-gray-500">
+										Image not available
+									</div>
+								)}
+								<div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+									<ZoomIn className="size-10 text-gray-800" />
+								</div>
 							</button>
-							<button
-								type="button"
-								className="flex items-center gap-2 text-white bg-black bg-opacity-70 rounded-full px-4 py-2 hover:bg-opacity-90"
-								onClick={handleNext}
-								aria-label="Next"
-							>
-								<span>Next</span>
-								<ArrowRight className="size-8" />
-							</button>
-						</div>
-						<DialogClose asChild>
-							<button
-								type="button"
-								className="absolute top-4 right-4 text-white bg-black bg-opacity-70 rounded-full p-2 hover:bg-opacity-90"
-								aria-label="Close"
-							>
-								<X className="size-8" />
-							</button>
-						</DialogClose>
-					</DialogContent>
-				</Dialog>
+						))}
+					</div>
+				</GalleryLightbox>
 			)}
 		</section>
 	);
-};
-
-export default Gallery;
+}

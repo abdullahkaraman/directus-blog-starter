@@ -15,14 +15,15 @@ const formatDirectusError = (error: unknown) => {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 	if (!siteUrl) {
-		throw new Error('Environment variable NEXT_PUBLIC_SITE_URL is not set');
+		console.warn('Skipping sitemap generation because NEXT_PUBLIC_SITE_URL is not set');
+
+		return [];
 	}
 	const fallbackSitemap = [{ url: siteUrl, lastModified: new Date().toISOString() }];
 
-	const { directus, readItems, withToken } = getDirectus();
-	const token = getDirectusServerToken();
-
 	try {
+		const { directus, readItems, withToken } = getDirectus();
+		const token = getDirectusServerToken();
 		const pagesPromise = directus.request(
 			withToken(
 				token as string,

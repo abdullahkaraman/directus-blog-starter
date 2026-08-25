@@ -1,5 +1,5 @@
-import { fetchRedirects } from './directus/fetchers';
 import type { Redirect as NextRedirect } from 'next/dist/lib/load-custom-routes';
+import type { Redirect } from '@/types/directus-schema';
 
 export interface RedirectError {
 	type: 'redirect';
@@ -12,8 +12,29 @@ function isRedirectError(error: unknown): error is RedirectError {
 }
 
 export async function generateRedirects(): Promise<NextRedirect[]> {
+	const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL?.trim();
+	const directusToken = process.env.DIRECTUS_SERVER_TOKEN?.trim();
+
+	if (!directusUrl || !directusToken) return [];
+
 	try {
-		const redirects = await fetchRedirects();
+		const endpoint = new URL('/items/redirects', directusUrl);
+		endpoint.searchParams.set('filter[url_from][_nnull]', 'true');
+		endpoint.searchParams.set('filter[url_to][_nnull]', 'true');
+		endpoint.searchParams.set('fields', 'url_from,url_to,response_code');
+
+		const response = await fetch(endpoint, {
+			headers: { Authorization: `Bearer ${directusToken}` },
+		});
+
+		if (!response.ok) {
+			throw new Error(`Directus redirects request failed with status ${response.status}`);
+		}
+
+		const payload = (await response.json()) as {
+			data?: Pick<Redirect, 'url_from' | 'url_to' | 'response_code'>[];
+		};
+		const redirects = payload.data ?? [];
 
 		return redirects
 			.filter(

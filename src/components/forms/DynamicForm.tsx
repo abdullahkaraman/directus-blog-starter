@@ -6,7 +6,7 @@ import { Form } from '@/components/ui/form';
 import Field from './FormField';
 import { buildZodSchema } from '@/lib/zodSchemaBuilder';
 import type { FormField as FormFieldType } from '@/types/directus-schema';
-import { setAttr } from '@directus/visual-editing';
+import { visualEditingAttr } from '@/lib/directus/visual-editing-attributes';
 
 interface DynamicFormProps {
 	fields: FormFieldType[];
@@ -47,7 +47,7 @@ const DynamicForm = ({ fields, onSubmit, submitLabel, id }: DynamicFormProps) =>
 			<form
 				onSubmit={form.handleSubmit(onSubmit)}
 				className="flex flex-wrap gap-6"
-				data-directus={setAttr({
+				data-directus={visualEditingAttr({
 					collection: 'forms',
 					item: id,
 					fields: 'fields',
@@ -61,7 +61,7 @@ const DynamicForm = ({ fields, onSubmit, submitLabel, id }: DynamicFormProps) =>
 				))}
 				<div className="w-full">
 					<div
-						data-directus={setAttr({
+						data-directus={visualEditingAttr({
 							collection: 'forms',
 							item: id,
 							fields: 'submit_label',

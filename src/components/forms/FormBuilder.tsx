@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import DynamicForm from './DynamicForm';
-import { submitForm } from '@/lib/directus/forms';
+import { submitFormAction } from '@/app/actions/forms';
 import { FormField } from '@/types/directus-schema';
 import { cn } from '@/lib/utils';
 
@@ -32,13 +32,7 @@ const FormBuilder = ({ form, className }: FormBuilderProps) => {
 	const handleSubmit = async (data: Record<string, any>) => {
 		setError(null);
 		try {
-			const fieldsWithNames = form.fields.map((field) => ({
-				id: field.id,
-				name: field.name || '',
-				type: field.type || '',
-			}));
-
-			await submitForm(form.id, fieldsWithNames, data);
+			await submitFormAction(form.id, data);
 
 			if (form.on_success === 'redirect' && form.success_redirect_url) {
 				window.location.href = form.success_redirect_url;
