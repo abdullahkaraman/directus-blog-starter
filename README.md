@@ -12,9 +12,10 @@ A production-oriented blog foundation built with Next.js 15, React 19, TypeScrip
 - Optional authenticated writing and publishing editor.
 - Sitemap generation, responsive navigation, and theme support.
 - Generated TypeScript types for the Directus schema.
+- Optional Telegram → Codex → Directus content-operations companion with project-owned profiles.
 
-This repository contains only the reusable starter. Personal content, migration scripts, editorial automation, and
-site-specific SEO tooling belong in the application built on top of it.
+This repository contains only reusable defaults. Personal content, private editorial instructions, migration scripts,
+source connectors, and site-specific SEO tooling belong in the application built on top of it.
 
 ## Requirements
 
@@ -121,12 +122,29 @@ pnpm dev
 
 Open `http://localhost:3000`.
 
+## Optional Content Operations
+
+The `automation/` directory is a separately deployed, disabled-by-default companion. It accepts authorized Telegram
+commands through n8n, runs Codex in an isolated read-only environment, validates structured output, and writes a
+Directus draft. Publishing always requires an explicit owner command.
+
+Each fork owns its content profile in `automation/worker/templates/`. `profile.json` configures publication identity,
+language, validation thresholds, taxonomy, Directus collection and field mapping, and public/preview paths. The files
+beside it define project-specific prompts and schemas. A restaurant discovery project should replace the article
+profile with its own evidence connectors and review schema instead of teaching the default article worker to scrape.
+
+This companion does not start with the Next.js application and is not required for normal starter use. See
+[`automation/README.md`](automation/README.md) for deployment, least-privilege permissions, Telegram commands,
+operations, and backup guidance.
+
 ## Commands
 
 ```bash
 pnpm dev
 pnpm build
 pnpm check:public-bundle
+pnpm content-ops:test
+pnpm content-ops:audit
 pnpm start
 pnpm test
 pnpm generate:types
@@ -165,6 +183,7 @@ scripts        Local schema and type-generation utilities
 src/types      Generated Directus schema types
 tests          Focused security and query tests
 public         Static assets
+automation     Optional profile-driven content operations companion
 ```
 
 ## License

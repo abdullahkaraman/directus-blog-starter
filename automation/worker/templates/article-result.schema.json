@@ -1,0 +1,66 @@
+{
+	"type": "object",
+	"properties": {
+		"deliveryStatus": { "type": "string", "enum": ["ready", "blocked"] },
+		"blockingReason": { "type": "string" },
+		"title": { "type": "string" },
+		"slug": { "type": "string" },
+		"description": { "type": "string" },
+		"content": { "type": "string" },
+		"seoTitle": { "type": "string" },
+		"metaDescription": { "type": "string" },
+		"tags": {
+			"type": "array",
+			"minItems": 3,
+			"maxItems": 3,
+			"items": {
+				"type": "string",
+				"enum": [
+					"Teknoloji",
+					"İşletme",
+					"Kültür",
+					"Eğitim",
+					"Bilim",
+					"Ürün",
+					"Yaşam",
+					"Başlangıç",
+					"Orta Seviye",
+					"İleri Seviye",
+					"Rehber",
+					"Analiz",
+					"Görüş"
+				]
+			}
+		},
+		"warnings": {
+			"type": "array",
+			"items": { "type": "string" }
+		},
+		"sources": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"title": { "type": "string" },
+					"url": { "type": "string" }
+				},
+				"required": ["title", "url"],
+				"additionalProperties": false
+			}
+		}
+	},
+	"required": [
+		"deliveryStatus",
+		"blockingReason",
+		"title",
+		"slug",
+		"description",
+		"content",
+		"seoTitle",
+		"metaDescription",
+		"tags",
+		"warnings",
+		"sources"
+	],
+	"additionalProperties": false
+}

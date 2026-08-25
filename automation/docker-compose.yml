@@ -1,0 +1,114 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-n8n}
+      POSTGRES_USER: ${POSTGRES_USER:-n8n}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-n8n} -d ${POSTGRES_DB:-n8n}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:${N8N_VERSION:-2.30.8}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:5678:5678'
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-n8n}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-n8n}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY}
+      N8N_HOST: ${N8N_HOST:?Set N8N_HOST}
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-https}
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:?Set N8N_WEBHOOK_URL}
+      N8N_PROXY_HOPS: ${N8N_PROXY_HOPS:-1}
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: 'true'
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Istanbul}
+      TZ: ${GENERIC_TIMEZONE:-Europe/Istanbul}
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  codex-worker:
+    build:
+      context: ./worker
+      args:
+        CODEX_VERSION: ${CODEX_VERSION:-0.144.6}
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:8787:8787'
+    environment:
+      HOME: /home/node
+      WORKER_API_TOKEN: ${WORKER_API_TOKEN:?Set WORKER_API_TOKEN}
+      TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set TELEGRAM_ALLOWED_USER_ID}
+      TELEGRAM_ALLOWED_CHAT_ID: ${TELEGRAM_ALLOWED_CHAT_ID:-${TELEGRAM_ALLOWED_USER_ID}}
+      CONTENT_PROFILE_DIR: ${CONTENT_PROFILE_DIR:-/app/templates}
+      DIRECTUS_URL: ${DIRECTUS_URL:?Set DIRECTUS_URL}
+      DIRECTUS_TOKEN: ${DIRECTUS_TOKEN:?Set DIRECTUS_TOKEN}
+      SITE_URL: ${SITE_URL:?Set SITE_URL}
+      DRAFT_PREVIEW_SECRET: ${DRAFT_PREVIEW_SECRET:?Set DRAFT_PREVIEW_SECRET}
+      N8N_CALLBACK_URL: http://n8n:5678/webhook/codex-result
+      N8N_CALLBACK_TOKEN: ${N8N_CALLBACK_TOKEN:?Set N8N_CALLBACK_TOKEN}
+      CODEX_LIVE_SEARCH: ${CODEX_LIVE_SEARCH:-false}
+      CODEX_QUALITY_REVIEW_ENABLED: ${CODEX_QUALITY_REVIEW_ENABLED:-false}
+      CODEX_DRAFT_MODEL: ${CODEX_DRAFT_MODEL:-}
+      CODEX_IDEA_MODEL: ${CODEX_IDEA_MODEL:-}
+      CODEX_REVIEW_MODEL: ${CODEX_REVIEW_MODEL:-}
+      CODEX_REVISION_MODEL: ${CODEX_REVISION_MODEL:-}
+      CODEX_LEARNING_MODEL: ${CODEX_LEARNING_MODEL:-}
+      CODEX_REASONING_EFFORT: ${CODEX_REASONING_EFFORT:-medium}
+      CODEX_IDEA_REASONING_EFFORT: ${CODEX_IDEA_REASONING_EFFORT:-xhigh}
+      CODEX_REVIEW_REASONING_EFFORT: ${CODEX_REVIEW_REASONING_EFFORT:-medium}
+      CODEX_REVISION_REASONING_EFFORT: ${CODEX_REVISION_REASONING_EFFORT:-medium}
+      CODEX_LEARNING_REASONING_EFFORT: ${CODEX_LEARNING_REASONING_EFFORT:-medium}
+      CODEX_TIMEOUT_MS: ${CODEX_TIMEOUT_MS:-720000}
+      CODEX_IDEA_TIMEOUT_MS: ${CODEX_IDEA_TIMEOUT_MS:-900000}
+      CODEX_REVIEW_TIMEOUT_MS: ${CODEX_REVIEW_TIMEOUT_MS:-120000}
+      CODEX_REVISION_TIMEOUT_MS: ${CODEX_REVISION_TIMEOUT_MS:-360000}
+      CODEX_LEARNING_TIMEOUT_MS: ${CODEX_LEARNING_TIMEOUT_MS:-120000}
+      WORKER_MAX_ATTEMPTS: ${WORKER_MAX_ATTEMPTS:-2}
+      WORKER_WORKSPACE_RETENTION_DAYS: ${WORKER_WORKSPACE_RETENTION_DAYS:-14}
+      WORKER_JOB_RETENTION_DAYS: ${WORKER_JOB_RETENTION_DAYS:-90}
+      WORKER_PUBLISHED_RETENTION_DAYS: ${WORKER_PUBLISHED_RETENTION_DAYS:-365}
+      WORKER_BACKUP_MAX_AGE_HOURS: ${WORKER_BACKUP_MAX_AGE_HOURS:-36}
+      WORKER_FAILURE_ALERT_THRESHOLD: ${WORKER_FAILURE_ALERT_THRESHOLD:-3}
+      WORKER_LEARNING_FAILURE_ALERT_THRESHOLD: ${WORKER_LEARNING_FAILURE_ALERT_THRESHOLD:-2}
+      WORKER_ALERT_DEDUPE_HOURS: ${WORKER_ALERT_DEDUPE_HOURS:-6}
+    volumes:
+      - worker_data:/data
+      - codex_auth:/home/node/.codex
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+    pids_limit: 128
+    mem_limit: 2g
+    cpus: 2.0
+    healthcheck:
+      test: ['CMD', 'curl', '--fail', '--silent', 'http://127.0.0.1:8787/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:
+  n8n_data:
+  worker_data:
+  codex_auth:

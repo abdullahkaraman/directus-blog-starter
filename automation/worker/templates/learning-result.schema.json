@@ -1,0 +1,24 @@
+{
+	"type": "object",
+	"properties": {
+		"outcome": { "type": "string", "enum": ["none", "proposal"] },
+		"reason": { "type": "string" },
+		"proposal": {
+			"anyOf": [
+				{ "type": "null" },
+				{
+					"type": "object",
+					"properties": {
+						"text": { "type": "string" },
+						"rationale": { "type": "string" },
+						"evidence": { "type": "array", "items": { "type": "string" } }
+					},
+					"required": ["text", "rationale", "evidence"],
+					"additionalProperties": false
+				}
+			]
+		}
+	},
+	"required": ["outcome", "reason", "proposal"],
+	"additionalProperties": false
+}
