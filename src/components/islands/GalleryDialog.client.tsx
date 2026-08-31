@@ -7,6 +7,7 @@ import DirectusImage from '@/components/shared/DirectusImage';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
 export type GalleryDialogItem = {
+	alt: string;
 	id: string;
 	directus_file: string;
 };
@@ -51,7 +52,7 @@ export default function GalleryDialog({ initialIndex, items, onClose }: GalleryD
 				<div className="relative flex h-[90vh] w-[90vw] items-center justify-center">
 					<DirectusImage
 						uuid={currentItem.directus_file}
-						alt={`Gallery item ${currentItem.id}`}
+						alt={currentItem.alt}
 						width={1200}
 						height={800}
 						className="size-full object-contain"
