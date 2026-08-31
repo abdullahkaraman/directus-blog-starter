@@ -5,6 +5,7 @@ import { Metadata } from 'next';
 
 import NavigationBar from '@/components/layout/NavigationBar';
 import Footer from '@/components/layout/Footer';
+import GoogleAnalytics from '@/components/seo/GoogleAnalytics';
 import VisualEditingBridge from '@/components/islands/VisualEditingBridge.client';
 import { fetchSiteData } from '@/lib/directus/fetchers';
 import { getDirectusAssetURL } from '@/lib/directus/directus-utils';
@@ -15,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 	const siteTitle = globals?.title || 'Directus Blog';
 	const siteDescription = globals?.description || 'A blog powered by Next.js and Directus.';
 	const faviconURL = globals?.favicon ? getDirectusAssetURL(globals.favicon) : '/favicon.ico';
+	const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
 
 	return {
 		title: {
@@ -25,6 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 		icons: {
 			icon: faviconURL,
 		},
+		verification: { google: googleSiteVerification || undefined },
 	};
 }
 
@@ -44,6 +47,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 				/>
 				<main className="flex-grow">{children}</main>
 				<Footer navigation={footerNavigation} globals={globals} />
+				<GoogleAnalytics />
 				{visualEditingEnabled && directusUrl ? <VisualEditingBridge directusUrl={directusUrl} /> : null}
 			</body>
 		</html>

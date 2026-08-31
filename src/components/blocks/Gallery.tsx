@@ -8,7 +8,7 @@ import { visualEditingAttr } from '@/lib/directus/visual-editing-attributes';
 
 interface GalleryItem {
 	id: string;
-	directus_file: string;
+	directus_file: { description?: string | null; id: string; title?: string | null } | string;
 	sort?: number;
 }
 
@@ -26,6 +26,18 @@ interface GalleryProps {
 export default function Gallery({ data }: GalleryProps) {
 	const { tagline, headline, items, id } = data;
 	const sortedItems = items?.toSorted((a, b) => (a.sort ?? 0) - (b.sort ?? 0)) ?? [];
+	const galleryItems = sortedItems.flatMap((item, index) => {
+		const file = typeof item.directus_file === 'string' ? { id: item.directus_file } : item.directus_file;
+		if (!file?.id) return [];
+
+		return [
+			{
+				alt: file.description?.trim() || file.title?.trim() || `${headline || 'Gallery image'} ${index + 1}`,
+				directus_file: file.id,
+				id: item.id,
+			},
+		];
+	});
 
 	return (
 		<section className="relative">
@@ -52,8 +64,8 @@ export default function Gallery({ data }: GalleryProps) {
 				/>
 			)}
 
-			{sortedItems.length > 0 && (
-				<GalleryLightbox items={sortedItems}>
+			{galleryItems.length > 0 && (
+				<GalleryLightbox items={galleryItems}>
 					<div
 						className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3"
 						data-directus={visualEditingAttr({
@@ -63,7 +75,7 @@ export default function Gallery({ data }: GalleryProps) {
 							mode: 'modal',
 						})}
 					>
-						{sortedItems.map((item, index) => (
+						{galleryItems.map((item, index) => (
 							<button
 								type="button"
 								key={item.id}
@@ -71,19 +83,13 @@ export default function Gallery({ data }: GalleryProps) {
 								className="group relative h-[300px] overflow-hidden rounded-lg text-left transition-shadow duration-300 hover:shadow-lg"
 								aria-label={`Open gallery item ${index + 1}`}
 							>
-								{item.directus_file ? (
-									<DirectusImage
-										uuid={item.directus_file}
-										alt={`Gallery item ${item.id}`}
-										fill
-										sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-										className="h-auto w-full rounded-lg object-cover"
-									/>
-								) : (
-									<div className="flex h-full items-center justify-center text-sm text-gray-500">
-										Image not available
-									</div>
-								)}
+								<DirectusImage
+									uuid={item.directus_file}
+									alt={item.alt}
+									fill
+									sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+									className="h-auto w-full rounded-lg object-cover"
+								/>
 								<div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
 									<ZoomIn className="size-10 text-gray-800" />
 								</div>

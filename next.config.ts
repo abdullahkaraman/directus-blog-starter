@@ -10,6 +10,7 @@ const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL ?? '';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 const isProduction = process.env.NODE_ENV === 'production';
 const isVisualEditingEnabled = process.env.NEXT_PUBLIC_ENABLE_VISUAL_EDITING === 'true';
+const isGoogleAnalyticsEnabled = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim());
 const directusAssetPattern = (() => {
 	if (!directusUrl) return null;
 	try {
@@ -34,12 +35,12 @@ const frameAncestors = [
 
 const ContentSecurityPolicy = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline';
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' ${isGoogleAnalyticsEnabled ? 'https://www.googletagmanager.com' : ''};
     frame-src 'self' ${isVisualEditingEnabled ? directusUrl : ''};
     style-src 'self' 'unsafe-inline';
     img-src 'self' ${directusUrl} blob: data:;
     media-src 'self' ${directusUrl};
-    connect-src 'self' ${siteUrl} ${directusUrl};
+    connect-src 'self' ${siteUrl} ${directusUrl} ${isGoogleAnalyticsEnabled ? 'https://www.google-analytics.com https://region1.google-analytics.com' : ''};
     font-src 'self' data:;
     frame-ancestors ${frameAncestors};
     base-uri 'self';

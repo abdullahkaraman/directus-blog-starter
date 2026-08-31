@@ -30,7 +30,12 @@ const pageFields = [
 			{
 				item: {
 					block_richtext: ['id', 'tagline', 'headline', 'content', 'alignment'],
-					block_gallery: ['id', 'tagline', 'headline', { items: ['id', 'directus_file', 'sort'] }],
+					block_gallery: [
+						'id',
+						'tagline',
+						'headline',
+						{ items: ['id', { directus_file: ['id', 'description', 'title'] }, 'sort'] },
+					],
 					block_pricing: [
 						'id',
 						'tagline',
