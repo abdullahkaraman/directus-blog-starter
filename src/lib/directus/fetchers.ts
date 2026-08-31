@@ -448,7 +448,7 @@ export const fetchSiteData = cache(
 					id: 'fallback',
 					title: 'Directus Blog',
 					description: 'A blog powered by Next.js and Directus.',
-					accent_color: '#6644ff',
+								accent_color: '#0f766e',
 				} satisfies SiteGlobals,
 				headerNavigation: {
 					id: 'main',

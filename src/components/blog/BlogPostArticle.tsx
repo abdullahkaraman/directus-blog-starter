@@ -35,7 +35,7 @@ export default function BlogPostArticle({ post, relatedPosts, slug }: BlogPostAr
 	return (
 		<article className="bg-white text-neutral-900">
 			<header className="mx-auto max-w-3xl px-6 pb-8 pt-14 sm:pt-20">
-				<p className="mb-5 text-sm font-medium uppercase tracking-[0.14em] text-emerald-800">Published story</p>
+				<p className="mb-5 text-sm font-medium uppercase tracking-[0.14em] text-teal-700">Published story</p>
 				<h1 className="font-serif text-5xl leading-[1.04] tracking-normal text-neutral-950 sm:text-6xl">
 					{post.title}
 				</h1>
@@ -85,7 +85,7 @@ export default function BlogPostArticle({ post, relatedPosts, slug }: BlogPostAr
 			<ArticleUtilityBar postTitle={post.title} postUrl={postUrl} />
 
 			<div className="mx-auto max-w-3xl px-6 pb-16">
-				<div className="prose prose-lg max-w-none bg-white font-serif text-neutral-900 prose-neutral prose-headings:font-sans prose-headings:font-semibold prose-headings:tracking-normal prose-headings:text-neutral-950 prose-p:leading-8 prose-p:text-neutral-900 prose-strong:text-neutral-950 prose-a:text-emerald-800 prose-blockquote:border-l-[6px] prose-blockquote:border-neutral-950 prose-blockquote:pl-6 prose-blockquote:font-serif prose-blockquote:text-2xl prose-blockquote:italic prose-blockquote:leading-9 prose-img:mx-auto prose-img:rounded-md prose-figcaption:text-center prose-code:rounded prose-code:bg-neutral-100 prose-code:px-1 prose-code:py-0.5 prose-code:text-[0.9em] prose-pre:rounded-md prose-pre:bg-neutral-950 prose-pre:text-neutral-100">
+				<div className="prose prose-lg max-w-none bg-white font-sans text-neutral-900 prose-neutral prose-headings:font-serif prose-headings:font-normal prose-headings:tracking-normal prose-headings:text-neutral-950 prose-p:leading-8 prose-p:text-neutral-900 prose-strong:text-neutral-950 prose-a:text-teal-700 prose-blockquote:border-l-[6px] prose-blockquote:border-neutral-950 prose-blockquote:pl-6 prose-blockquote:font-serif prose-blockquote:text-2xl prose-blockquote:italic prose-blockquote:leading-9 prose-img:mx-auto prose-img:rounded-md prose-figcaption:text-center prose-code:rounded prose-code:bg-neutral-100 prose-code:px-1 prose-code:py-0.5 prose-code:text-[0.9em] prose-pre:rounded-md prose-pre:bg-neutral-950 prose-pre:text-neutral-100">
 					{content}
 				</div>
 
@@ -116,7 +116,7 @@ export default function BlogPostArticle({ post, relatedPosts, slug }: BlogPostAr
 						<div className="mt-6 grid gap-6 sm:grid-cols-2">
 							{relatedPosts.map((relatedPost) => (
 								<Link key={relatedPost.id} href={getPostHref(relatedPost)} className="group">
-									<p className="font-serif text-2xl leading-tight text-neutral-950 group-hover:text-emerald-800">
+									<p className="font-serif text-2xl leading-tight text-neutral-950 group-hover:text-teal-700">
 										{relatedPost.title}
 									</p>
 									{getPostExcerpt(relatedPost, 110) && (
