@@ -8,7 +8,8 @@ export const buttonVariants = cva(
 				default: 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 hover:text-neutral-950',
 				destructive: 'bg-red-600 text-white hover:bg-red-500',
 				outline: 'border border-neutral-300 text-neutral-800 hover:border-neutral-800 hover:text-neutral-950',
-				secondary: 'bg-blue text-white hover:bg-blue-800 dark:bg-accent',
+				secondary:
+					'bg-neutral-800 text-white hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200',
 				ghost: 'bg-transparent text-gray-900 hover:bg-background-muted dark:text-white',
 				link: 'text-neutral-700 underline-offset-4 hover:text-neutral-950 dark:text-gray-500',
 			},

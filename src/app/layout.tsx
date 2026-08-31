@@ -33,12 +33,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
 	const { globals, headerNavigation, footerNavigation } = await fetchSiteData();
-	const accentColor = globals?.accent_color || '#6644ff';
 	const visualEditingEnabled = process.env.NEXT_PUBLIC_ENABLE_VISUAL_EDITING === 'true';
 	const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL?.trim();
 
 	return (
-		<html lang="en" style={{ '--accent-color': accentColor } as React.CSSProperties}>
+		<html lang="en">
 			<body className="antialiased font-sans flex flex-col min-h-screen">
 				<NavigationBar
 					navigation={headerNavigation}

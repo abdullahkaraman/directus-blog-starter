@@ -8,7 +8,7 @@ const config: Config = {
 	theme: {
 		extend: {
 			fontFamily: {
-				heading: ['Poppins', 'sans-serif'],
+				heading: ['ui-serif', 'Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
 				sans: ['Inter', 'sans-serif'],
 				code: ['Fira Mono', 'monospace'],
 			},
@@ -41,14 +41,6 @@ const config: Config = {
 				secondary: 'var(--accent-color-dark)',
 				accent: 'var(--accent-color)',
 				soft: 'var(--accent-color-soft)',
-				blue: {
-					DEFAULT: '#172940',
-				},
-				gray: {
-					DEFAULT: '#F5F8FB',
-					muted: '#A5B0BD',
-					dark: '#42566E',
-				},
 			},
 			typography: {
 				DEFAULT: {
@@ -63,21 +55,21 @@ const config: Config = {
 							},
 						},
 						h1: {
-							fontFamily: 'Poppins',
+							fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
 							fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
 							fontWeight: '400',
 							lineHeight: '1.2',
 							marginTop: '1rem',
 						},
 						h2: {
-							fontFamily: 'Poppins',
+							fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
 							fontSize: 'clamp(2rem, 4vw, 2.5rem)',
 							fontWeight: '400',
 							lineHeight: '1.3',
 							marginTop: '1rem',
 						},
 						h3: {
-							fontFamily: 'Poppins',
+							fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
 							fontSize: 'clamp(1.5rem, 3vw, 2rem)',
 							fontWeight: '400',
 							lineHeight: '1.4',

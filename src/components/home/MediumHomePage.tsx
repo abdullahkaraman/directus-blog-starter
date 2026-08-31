@@ -53,7 +53,7 @@ function FeaturedPost({ post }: { post: PostWithAuthor }) {
 		>
 			<div className="flex min-h-[360px] flex-col justify-end">
 				<div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-600">
-					<Sparkles className="size-3.5 text-emerald-700" />
+					<Sparkles className="size-3.5 text-teal-700" />
 					Featured today
 				</div>
 				<PostMeta post={post} />
@@ -106,7 +106,7 @@ function ArticleRow({ post }: { post: PostWithAuthor }) {
 					<span className="text-sm text-neutral-700">{getAuthorName(post.author)}</span>
 				</div>
 				<Link href={getPostHref(post)}>
-					<h2 className="font-serif text-2xl leading-tight text-neutral-950 transition-colors group-hover:text-emerald-800">
+						<h2 className="font-serif text-2xl leading-tight text-neutral-950 transition-colors group-hover:text-teal-700">
 						{post.title}
 					</h2>
 					<p className="mt-2 line-clamp-2 text-base leading-7 text-neutral-600">{getPostExcerpt(post)}</p>
@@ -249,7 +249,7 @@ export default function MediumHomePage({ posts, globals }: MediumHomePageProps) 
 			<Container className="py-8 sm:py-12">
 				<div className="mb-8 flex flex-col gap-3 border-b border-neutral-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
 					<div>
-						<p className="text-sm font-medium uppercase tracking-[0.14em] text-emerald-800">
+						<p className="text-sm font-medium uppercase tracking-[0.14em] text-teal-700">
 							{globals?.tagline || 'Thoughtful writing'}
 						</p>
 						<p className="mt-2 max-w-xl text-sm leading-6 text-neutral-500">
@@ -274,7 +274,7 @@ export default function MediumHomePage({ posts, globals }: MediumHomePageProps) 
 									</span>
 									<div>
 										<PostMeta post={post} />
-										<h3 className="mt-2 text-base font-semibold leading-snug text-neutral-950 group-hover:text-emerald-800">
+										<h3 className="mt-2 text-base font-semibold leading-snug text-neutral-950 group-hover:text-teal-700">
 											{post.title}
 										</h3>
 									</div>
