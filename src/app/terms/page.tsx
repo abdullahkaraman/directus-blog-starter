@@ -1,4 +1,4 @@
-import Container from '@/components/ui/container';
+import InfoPage from '@/components/content/InfoPage';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -8,15 +8,25 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
 	return (
-		<Container className="max-w-3xl py-16 sm:py-24">
-			<article className="prose prose-lg max-w-none">
-				<h1>Terms</h1>
-				<p>
-					This is starter copy. Replace it with terms that fit your content, services, jurisdiction, and any user
-					submissions before publishing.
-				</p>
-				<p>Do not present general template text as legal advice; obtain appropriate review for your use case.</p>
-			</article>
-		</Container>
+		<InfoPage
+			eyebrow="Legal information"
+			title="Terms"
+			description="Set the expectations that govern access to and use of your site."
+			summary="Replace this template with terms that match your content, services, jurisdiction, and user submissions."
+			sections={[
+				{
+					title: 'Content use',
+					content: 'State what visitors may quote, share, or reuse, and how attribution should work.',
+				},
+				{
+					title: 'Responsibility',
+					content: 'Clarify that editorial content is not professional advice where that distinction matters.',
+				},
+				{
+					title: 'External links',
+					content: 'Explain that third-party sites have their own content and privacy practices.',
+				},
+			]}
+		/>
 	);
 }

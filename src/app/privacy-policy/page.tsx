@@ -1,4 +1,4 @@
-import Container from '@/components/ui/container';
+import InfoPage from '@/components/content/InfoPage';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -8,15 +8,25 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
 	return (
-		<Container className="max-w-3xl py-16 sm:py-24">
-			<article className="prose prose-lg max-w-none">
-				<h1>Privacy</h1>
-				<p>
-					This is starter copy. Replace it with a policy that accurately reflects your forms, analytics, hosting,
-					content platform, and applicable law.
-				</p>
-				<p>Do not enable analytics until your privacy notice and consent flow, where required, are ready.</p>
-			</article>
-		</Container>
+		<InfoPage
+			eyebrow="Legal information"
+			title="Privacy"
+			description="Explain how your site handles information, cookies, and third-party services."
+			summary="This is starter copy, not legal advice. Replace it with a policy that reflects your actual operations and jurisdiction."
+			sections={[
+				{
+					title: 'Information you collect',
+					content: 'List form fields, analytics data, and any other information processed by the site.',
+				},
+				{
+					title: 'Services you use',
+					content: 'Name your hosting, content platform, analytics, and message-delivery providers.',
+				},
+				{
+					title: 'Consent and choices',
+					content: 'Describe consent, retention, and contact options required for your use case.',
+				},
+			]}
+		/>
 	);
 }

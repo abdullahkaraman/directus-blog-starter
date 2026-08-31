@@ -1,4 +1,4 @@
-import Container from '@/components/ui/container';
+import InfoPage from '@/components/content/InfoPage';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -8,12 +8,18 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
 	return (
-		<Container className="max-w-3xl py-16 sm:py-24">
-			<article className="prose prose-lg max-w-none">
-				<h1>About</h1>
-				<p>Use this page to explain who publishes the site, what readers can expect, and how you approach your work.</p>
-				<p>Before publishing, replace this starter copy with accurate information about your organisation or author.</p>
-			</article>
-		</Container>
+		<InfoPage
+			eyebrow="About this site"
+			title="About"
+			description="Introduce the people, perspective, and purpose behind your publication."
+			summary="Replace the starter language with accurate information about your organisation or author."
+			sections={[
+				{ title: 'What you publish', content: 'Explain the subjects, formats, and audience this site serves.' },
+				{
+					title: 'How you work',
+					content: 'Describe your editorial process, expertise, and the standards readers should expect.',
+				},
+			]}
+		/>
 	);
 }
