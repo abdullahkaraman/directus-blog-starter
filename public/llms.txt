@@ -1,0 +1,21 @@
+# Directus Blog Starter
+
+> Directus ile içerik yöneten siteler için Next.js tabanlı, yeniden kullanılabilir blog başlangıç projesi.
+
+Bu proje ile oluşturulan sitelerde herkese açık içerik, yayımlanmış sayfalar ve
+blog yazılarından oluşur. Kurulumu yapan kişi bu dosyadaki proje adı, açıklama,
+bağlantılar ve kullanım notlarını kendi sitesine göre güncellemelidir.
+
+## İçerik
+
+- [Ana sayfa](/): Siteye ve öne çıkan içeriğe giriş.
+- [Blog](/blog): Yayımlanmış blog yazılarının arşivi.
+- [Sitemap](/sitemap.xml): Yayımlanmış ve indekslenebilir sayfaların güncel listesi.
+
+## Kullanım notları
+
+- Yazıların kanonik adresi `/blog/{slug}` biçimindedir.
+- Yalnızca herkese açık, yayımlanmış içeriği kullanın.
+- Bir yazıyı özetlerken veya atıf yaparken kaynak URL'sini koruyun.
+- Bu dosya bir erişim izni veya lisans beyanı değildir; site üzerindeki açık
+  telif ve kullanım koşulları geçerlidir.
