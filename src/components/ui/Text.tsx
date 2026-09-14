@@ -10,7 +10,10 @@ export interface TextProps {
 const Text = ({ content, className, 'data-directus': dataDirectus }: TextProps) => {
 	return (
 		<div
-			className={cn('prose dark:prose-invert', className)}
+			className={cn(
+				'prose font-sans prose-p:font-sans prose-li:font-sans prose-headings:font-serif prose-headings:font-normal dark:prose-invert',
+				className,
+			)}
 			dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
 			data-directus={dataDirectus}
 		/>
