@@ -1,0 +1,24 @@
+{
+	"type": "object",
+	"properties": {
+		"verdict": { "type": "string", "enum": ["pass", "revise", "reject"] },
+		"summary": { "type": "string" },
+		"issues": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"severity": { "type": "string", "enum": ["blocker", "major", "minor"] },
+					"criterion": { "type": "string" },
+					"evidence": { "type": "string" },
+					"instruction": { "type": "string" }
+				},
+				"required": ["severity", "criterion", "evidence", "instruction"],
+				"additionalProperties": false
+			}
+		},
+		"revisionInstructions": { "type": "string" }
+	},
+	"required": ["verdict", "summary", "issues", "revisionInstructions"],
+	"additionalProperties": false
+}

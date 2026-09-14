@@ -1,0 +1,85 @@
+{
+	"id": "contentOpsWorkerResult",
+	"name": "Content Ops — Codex Sonucu",
+	"nodes": [
+		{
+				"parameters": { "httpMethod": "POST", "path": "codex-result", "authentication": "headerAuth", "responseMode": "lastNode", "options": {} },
+			"id": "result-webhook",
+			"name": "Codex Result Webhook",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 2,
+			"position": [0, 0],
+			"webhookId": "content-ops-codex-result",
+			"credentials": {
+				"httpHeaderAuth": {
+					"id": "contentOpsCallbackHeaderAuth",
+					"name": "Content Ops — Callback Bearer"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"jsCode": "if (!$json.body?.telegramChatId || !$json.body?.id || !$json.body?.status) {\n  throw new Error('Invalid worker callback payload.');\n}\nreturn [{ json: $json.body }];"
+			},
+			"id": "verify-callback",
+			"name": "Callback Doğrula",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+				"position": [240, 0]
+			},
+			{
+				"parameters": {
+					"jsCode": "const job = $json;\nconst deliveryKey = `${job.id}:${job.status}`;\nconst state = $getWorkflowStaticData('global');\nstate.callbackDeliveries ||= {};\nif (state.callbackDeliveries[deliveryKey]) return [];\nreturn [{ json: { ...job, deliveryKey } }];"
+				},
+				"id": "dedupe-callback",
+				"name": "Callback Tekrarını Engelle",
+				"type": "n8n-nodes-base.code",
+				"typeVersion": 2,
+				"position": [480, 0]
+			},
+			{
+				"parameters": {
+					"jsCode": "const job = $json;\nconst escapeHtmlCharacter = (character) =>\n  character === '&' ? '&amp;' : character === '<' ? '&lt;' : character === '>' ? '&gt;' : character;\nconst escapeHtmlWithin = (value, limit = Number.POSITIVE_INFINITY) => {\n  let output = '';\n  for (const character of String(value)) {\n    const escaped = escapeHtmlCharacter(character);\n    if (output.length + escaped.length > limit) break;\n    output += escaped;\n  }\n  return output;\n};\nconst withActions = (body, actions = '') => {\n  const suffix = actions ? `\\n\\n${escapeHtmlWithin(actions)}` : '';\n  const room = Math.max(0, 4096 - suffix.length);\n  return `${escapeHtmlWithin(body, room)}${suffix}`.slice(0, 4096);\n};\nconst result = (body, actions = '') => [{ json: { chatId: job.telegramChatId, deliveryKey: job.deliveryKey, text: withActions(body, actions) } }];\nif (job.result?.kind === 'learning') {\n  if (job.status === 'completed' && job.result.outcome === 'proposal' && job.result.proposal) {\n    const proposal = job.result.proposal;\n    return result(`Yayın sonrası editoryal öğrenme tamamlandı.\\n\\nHafıza önerisi: ${proposal.id}\\n${proposal.text}`, `Düzenle: /hafiza_duzenle ${proposal.id} <yeni-kural>\\nOnayla: /hafiza_onayla ${proposal.id}\\nReddet: /hafiza_reddet ${proposal.id}`);\n  }\n  if (job.status === 'completed' && job.result.outcome === 'none') {\n    return result(`Yayın sonrası editoryal öğrenme tamamlandı.\\n\\nBu yayın için kalıcı bir hafıza kuralı önermeye gerek görülmedi.\\n\\nGerekçe: ${job.result.reason || 'Belirtilmedi.'}`);\n  }\n  return result(`Yazı yayında kalmaya devam ediyor. Ancak yayın sonrası editoryal öğrenme tamamlanamadı; yayın bundan etkilenmedi.\\n\\nÖğrenme iş no: ${job.id}\\nHata: ${String(job.error || job.result.error || 'Bilinmeyen hata').slice(0, 1000)}`);\n}\nif (job.status === 'completed' && job.result?.kind === 'ideas') {\n  const options = job.result.options.map((option, index) => `${index + 1}. ${option.title}\\n${option.hook}`).join('\\n\\n');\n  const summary = job.result.researchSummary ? `${job.result.researchSummary}\\n\\n` : '';\n  return result(`Fikir araştırması hazır: ${job.result.theme}\\n\\n${summary}${options}`, `Bir fikri yazıya dönüştürmek için:\\n/sec ${job.id} <seçenek-no>`);\n}\nif (job.status === 'completed' && job.result?.kind === 'publish') {\n  const learning = job.result.learning?.status === 'failed'\n    ? '\\n\\nYayın sonrası öğrenme başlatılamadı; yayın bundan etkilenmedi.'\n    : '\\n\\nYayın sonrası editoryal öğrenme arka planda sürüyor.';\n  return result(`Yazı yayınlandı: ${job.result.title}\\n\\n${job.result.url}${learning}`);\n}\nif (job.status === 'completed') {\n  const warnings = job.result.warnings?.length ? `\\n\\nKontrol notları:\\n• ${job.result.warnings.join('\\n• ')}` : '';\n  const quality = job.result.quality ? `\\nKalite denetimi: geçti${job.result.quality.revisionCount ? ` (${job.result.quality.revisionCount} otomatik düzeltme)` : ''}` : '';\n  const label = job.result.revisedFromJobId ? 'Revize taslak hazır' : 'Taslak hazır';\n  return result(`${label}: ${job.result.title}\\n\\nOkuma süresi: ${job.result.readTime} dk${quality}\\nÖnizleme: ${job.result.previewUrl}${warnings}`, `Düzenlemek için:\\n/edit ${job.id} <talimat>\\n\\nYayınlamak için:\\n/yayinla ${job.id}`);\n}\nif (job.status === 'cancelled') {\n  return result(`İş iptal edildi.\\n\\nİş no: ${job.id}`, `Tekrar başlatmak için:\\n/tekrar ${job.id}`);\n}\nconst unsafeRetry = ['saving-draft', 'publishing'].includes(job.failureStage) || !job.failureStage;\nconst actions = unsafeRetry ? '' : `Güvenliyse tekrar denemek için:\\n/tekrar ${job.id}`;\nconst guidance = unsafeRetry ? '\\n\\nBu iş dış sisteme yazma aşamasında kesilmiş olabilir. Tekrar denemeden önce Directus durumunu kontrol et.' : '';\nreturn result(`İçerik işi tamamlanamadı.\\n\\nİş no: ${job.id}\\nHata: ${String(job.error || 'Bilinmeyen hata').slice(0, 1000)}${guidance}`, actions);"
+				},
+			"id": "format-result",
+			"name": "Sonucu Biçimlendir",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+				"position": [720, 0]
+		},
+		{
+			"parameters": {
+				"chatId": "={{ $json.chatId }}",
+				"text": "={{ $json.text }}",
+				"additionalFields": { "disableWebPagePreview": false, "appendAttribution": false, "parse_mode": "HTML" }
+			},
+			"id": "send-result",
+			"name": "Telegram Sonuç Mesajı",
+			"type": "n8n-nodes-base.telegram",
+			"typeVersion": 1.2,
+				"position": [960, 0]
+			},
+			{
+				"parameters": {
+					"jsCode": "const deliveryKey = $('Callback Tekrarını Engelle').first().json.deliveryKey;\nconst state = $getWorkflowStaticData('global');\nstate.callbackDeliveries ||= {};\nstate.callbackDeliveries[deliveryKey] = new Date().toISOString();\nconst entries = Object.entries(state.callbackDeliveries).sort((left, right) => String(right[1]).localeCompare(String(left[1])));\nfor (const [key] of entries.slice(2000)) delete state.callbackDeliveries[key];\nreturn $input.all();"
+				},
+				"id": "mark-callback-delivered",
+				"name": "Callback Teslimini Kaydet",
+				"type": "n8n-nodes-base.code",
+				"typeVersion": 2,
+				"position": [1200, 0]
+			}
+	],
+	"connections": {
+		"Codex Result Webhook": { "main": [[{ "node": "Callback Doğrula", "type": "main", "index": 0 }]] },
+		"Callback Doğrula": { "main": [[{ "node": "Callback Tekrarını Engelle", "type": "main", "index": 0 }]] },
+		"Callback Tekrarını Engelle": { "main": [[{ "node": "Sonucu Biçimlendir", "type": "main", "index": 0 }]] },
+		"Sonucu Biçimlendir": { "main": [[{ "node": "Telegram Sonuç Mesajı", "type": "main", "index": 0 }]] },
+		"Telegram Sonuç Mesajı": { "main": [[{ "node": "Callback Teslimini Kaydet", "type": "main", "index": 0 }]] }
+	},
+	"settings": { "executionOrder": "v1", "saveManualExecutions": true },
+	"active": false,
+	"versionId": "b8f4992f-1f07-4a90-8e1c-dc7e2c4d3cd8",
+	"meta": { "templateCredsSetupCompleted": false },
+	"tags": []
+}

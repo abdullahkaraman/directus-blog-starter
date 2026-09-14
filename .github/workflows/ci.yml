@@ -29,3 +29,9 @@ jobs:
       - run: pnpm exec tsc --noEmit
       - run: pnpm build
       - run: pnpm check:public-bundle
+      - name: Verify optional content operations worker
+        working-directory: automation/worker
+        run: |
+          npm ci --ignore-scripts
+          npm test
+          npm audit --omit=dev --audit-level=moderate

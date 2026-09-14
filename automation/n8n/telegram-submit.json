@@ -1,0 +1,111 @@
+{
+	"id": "contentOpsTelegramSubmit",
+	"name": "Content Ops — Telegram İçerik Talebi",
+	"nodes": [
+		{
+			"parameters": { "updates": ["message"], "additionalFields": {} },
+			"id": "telegram-trigger",
+			"name": "Telegram Trigger",
+			"type": "n8n-nodes-base.telegramTrigger",
+			"typeVersion": 1.2,
+			"position": [0, 0],
+			"webhookId": "content-ops-telegram-content"
+		},
+		{
+			"parameters": {
+				"jsCode": "const message = $json.message;\nif (!message?.text || !message?.chat?.id || !message?.from?.id || !message?.message_id) {\n  throw new Error('Desteklenmeyen Telegram mesajı. Yalnızca metin gönderin.');\n}\nreturn [{ json: {\n  authorized: message.chat.type === 'private',\n  prompt: message.text.trim(),\n  telegramChatId: String(message.chat.id),\n  telegramUserId: String(message.from.id),\n  idempotencyKey: `tg:${message.chat.id}:${message.message_id}`\n} }];"
+			},
+			"id": "normalize-request",
+			"name": "Yetkilendir ve Normalize Et",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [240, 0]
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+					"conditions": [
+						{
+							"id": "authorized",
+							"leftValue": "={{ $json.authorized }}",
+							"rightValue": true,
+							"operator": { "type": "boolean", "operation": "true", "singleValue": true }
+						}
+					],
+					"combinator": "and"
+				},
+				"options": {}
+			},
+			"id": "is-authorized",
+			"name": "Yetkili mi?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2.2,
+			"position": [480, 0]
+		},
+		{
+			"parameters": {
+				"method": "POST",
+				"url": "http://codex-worker:8787/v1/jobs",
+				"authentication": "genericCredentialType",
+				"genericAuthType": "httpHeaderAuth",
+				"sendBody": true,
+				"contentType": "raw",
+				"rawContentType": "application/json",
+				"body": "={{ JSON.stringify({ prompt: $json.prompt, telegramChatId: $json.telegramChatId, telegramUserId: $json.telegramUserId, idempotencyKey: $json.idempotencyKey }) }}",
+				"options": { "timeout": 30000 }
+			},
+			"id": "enqueue-worker",
+			"name": "Codex Worker'a Gönder",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [720, -100],
+			"credentials": {
+				"httpHeaderAuth": {
+					"id": "contentOpsWorkerApiHeaderAuth",
+					"name": "Content Ops — Worker API Bearer"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"chatId": "={{ $('Yetkilendir ve Normalize Et').item.json.telegramChatId }}",
+				"text": "={{ $json.immediateResponse ? $json.message : `İş sıraya alındı. Codex tamamladığında sonucu buraya göndereceğim.\\n\\nİş no: ${$json.job.id}\\n\\nDurumu görmek için:\\n/durum ${$json.job.id}\\n\\nİptal etmek için:\\n/iptal ${$json.job.id}` }}",
+				"additionalFields": { "appendAttribution": false }
+			},
+			"id": "telegram-accepted",
+			"name": "Sıraya Alındı Mesajı",
+			"type": "n8n-nodes-base.telegram",
+			"typeVersion": 1.2,
+			"position": [960, -100]
+		},
+		{
+			"parameters": {
+				"chatId": "={{ $json.telegramChatId }}",
+				"text": "Bu bot özel kullanımdadır.",
+				"additionalFields": { "appendAttribution": false }
+			},
+			"id": "telegram-denied",
+			"name": "Yetkisiz Mesajı",
+			"type": "n8n-nodes-base.telegram",
+			"typeVersion": 1.2,
+			"position": [720, 120]
+		}
+	],
+	"connections": {
+		"Telegram Trigger": { "main": [[{ "node": "Yetkilendir ve Normalize Et", "type": "main", "index": 0 }]] },
+		"Yetkilendir ve Normalize Et": { "main": [[{ "node": "Yetkili mi?", "type": "main", "index": 0 }]] },
+		"Yetkili mi?": {
+			"main": [
+				[{ "node": "Codex Worker'a Gönder", "type": "main", "index": 0 }],
+				[{ "node": "Yetkisiz Mesajı", "type": "main", "index": 0 }]
+			]
+		},
+		"Codex Worker'a Gönder": { "main": [[{ "node": "Sıraya Alındı Mesajı", "type": "main", "index": 0 }]] }
+	},
+	"settings": { "executionOrder": "v1", "saveManualExecutions": true },
+	"active": false,
+	"versionId": "699881b5-21c2-43a5-991a-8fdf8b6b06a8",
+	"meta": { "templateCredsSetupCompleted": false },
+	"tags": []
+}

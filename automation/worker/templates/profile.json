@@ -1,0 +1,65 @@
+{
+	"id": "default",
+	"pipeline": "article",
+	"publication": {
+		"name": "Yayın",
+		"assistantName": "İçerik asistanı",
+		"language": "tr",
+		"authorVoice": "clear, practical, evidence-aware and reader-focused"
+	},
+	"ideas": {
+		"defaultPrompt": "Yayın için güncel, özgün ve okura gerçek değer sunan içerik fikirleri araştır.",
+		"selectionPrompt": "Seçilen fikir ve kaynak bağlamını temel alarak kapsamlı, kanıta dayalı ve uygulanabilir bir yazı hazırla."
+	},
+	"article": {
+		"validation": {
+			"minimumWords": 1000,
+			"minimumHeadings": 4,
+			"minimumParagraphs": 8,
+			"wordsPerMinute": 225
+		},
+		"taxonomy": {
+			"topic": ["Teknoloji", "İşletme", "Kültür", "Eğitim", "Bilim", "Ürün", "Yaşam"],
+			"level": ["Başlangıç", "Orta Seviye", "İleri Seviye"],
+			"approach": ["Rehber", "Analiz", "Görüş"]
+		}
+	},
+	"routes": {
+		"publicPost": "/blog",
+		"previewPost": "/preview/blog"
+	},
+	"cms": {
+		"collection": "posts",
+		"recentLimit": 12,
+		"statuses": { "draft": "draft", "published": "published" },
+		"fields": {
+			"id": "id",
+			"title": "title",
+			"slug": "slug",
+			"description": "description",
+			"content": "content",
+			"readTime": "read_time",
+			"status": "status",
+			"publishedAt": "published_at",
+			"seo": "seo"
+		},
+		"seoFields": {
+			"title": "title",
+			"metaDescription": "meta_description",
+			"additional": "additional_fields",
+			"tags": "tags"
+		}
+	},
+	"templates": {
+		"articleInstructions": "AGENTS.md",
+		"ideaInstructions": "IDEAS.md",
+		"editorialContext": "EDITORIAL_CONTEXT.md",
+		"editorialMemory": "EDITORIAL_MEMORY.md",
+		"qualityReview": "QUALITY_REVIEW.md",
+		"learning": "LEARNING.md",
+		"articleSchema": "article-result.schema.json",
+		"ideaSchema": "idea-result.schema.json",
+		"qualityReviewSchema": "quality-review.schema.json",
+		"learningSchema": "learning-result.schema.json"
+	}
+}

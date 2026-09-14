@@ -1,0 +1,91 @@
+{
+	"id": "contentOpsOperationsWatchdog",
+	"name": "Content Ops — Operasyon Uyarıları",
+	"nodes": [
+		{
+			"parameters": { "rule": { "interval": [{ "field": "minutes", "minutesInterval": 10 }] } },
+			"id": "watchdog-schedule",
+			"name": "Her 10 Dakika",
+			"type": "n8n-nodes-base.scheduleTrigger",
+			"typeVersion": 1.2,
+			"position": [0, 0]
+		},
+		{
+			"parameters": {
+				"method": "POST",
+				"url": "http://codex-worker:8787/v1/operations/check",
+				"authentication": "genericCredentialType",
+				"genericAuthType": "httpHeaderAuth",
+				"options": { "timeout": 30000 }
+			},
+			"id": "check-operations",
+			"name": "Operasyonları Kontrol Et",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [240, 0],
+			"credentials": {
+				"httpHeaderAuth": {
+					"id": "contentOpsWorkerApiHeaderAuth",
+					"name": "Content Ops — Worker API Bearer"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"jsCode": "const chatId = String($json.telegramChatId || '');\nif (!chatId) throw new Error('Worker operasyon uyarısı için Telegram sohbet kimliği döndürmedi.');\nconst notifications = Array.isArray($json.notifications) ? $json.notifications : [];\nreturn notifications.map((notification) => ({ json: { notificationId: notification.id, chatId, text: `${notification.severity === 'recovery' ? '✅' : notification.severity === 'critical' ? '🚨' : '⚠️'} ${notification.message}` } }));"
+			},
+			"id": "expand-alerts",
+			"name": "Uyarıları Hazırla",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [480, 0]
+		},
+		{
+			"parameters": {
+				"chatId": "={{ $json.chatId }}",
+				"text": "={{ $json.text }}",
+				"additionalFields": { "appendAttribution": false }
+			},
+			"id": "send-alert",
+			"name": "Telegram Uyarısı",
+			"type": "n8n-nodes-base.telegram",
+			"typeVersion": 1.2,
+			"position": [720, 0]
+		},
+		{
+			"parameters": {
+				"method": "POST",
+				"url": "http://codex-worker:8787/v1/operations/ack",
+				"authentication": "genericCredentialType",
+				"genericAuthType": "httpHeaderAuth",
+				"sendBody": true,
+				"contentType": "raw",
+				"rawContentType": "application/json",
+				"body": "={{ JSON.stringify({ notificationIds: [ $('Uyarıları Hazırla').item.json.notificationId ] }) }}",
+				"options": { "timeout": 30000 }
+			},
+			"id": "ack-alert",
+			"name": "Uyarıyı Onayla",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [960, 0],
+			"credentials": {
+				"httpHeaderAuth": {
+					"id": "contentOpsWorkerApiHeaderAuth",
+					"name": "Content Ops — Worker API Bearer"
+				}
+			}
+		}
+	],
+	"connections": {
+		"Her 10 Dakika": { "main": [[{ "node": "Operasyonları Kontrol Et", "type": "main", "index": 0 }]] },
+		"Operasyonları Kontrol Et": { "main": [[{ "node": "Uyarıları Hazırla", "type": "main", "index": 0 }]] },
+		"Uyarıları Hazırla": { "main": [[{ "node": "Telegram Uyarısı", "type": "main", "index": 0 }]] },
+		"Telegram Uyarısı": { "main": [[{ "node": "Uyarıyı Onayla", "type": "main", "index": 0 }]] }
+	},
+	"settings": { "executionOrder": "v1", "saveManualExecutions": true },
+	"active": false,
+	"versionId": "d5df8f39-11c7-4b96-8a55-887335d4a1aa",
+	"meta": { "templateCredsSetupCompleted": false },
+	"tags": []
+}
